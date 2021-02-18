@@ -7,22 +7,6 @@ on:
     branches:
       - master
 jobs:
-  build_web:
-    name: Build Flutter (Web)
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - uses: subosito/flutter-action@v1
-      with:
-          channel: 'dev'
-    - run: flutter pub get
-    - run: flutter config --enable-web
-    - run: flutter build web
-    - name: Archive Production Artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: web-build
-        path: build/web
   build_ios:
     name: Build Flutter (iOS)
     runs-on: macOS-latest
@@ -54,11 +38,9 @@ jobs:
       with:
           channel: 'dev'
     - run: flutter pub get
-#     - run: flutter build apk --target-platform android-arm,android-arm64 --split-per-abi
-#     - run: flutter build appbundle --target-platform android-arm,android-arm64
-    - run: flutter build appbundle
+    - run: flutter build apk --target-platform android-arm64
     - name: Upload APK
       uses: actions/upload-artifact@master
       with:
         name: apk-build
-        path: build/app/outputs/apk/release
+        path: build/app/outputs/apk/release/*.apk
