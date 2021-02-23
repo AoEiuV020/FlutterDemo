@@ -37,11 +37,19 @@ jobs:
     - run: flutter pub get
     - run: flutter clean
     - run: flutter build ios --release --no-codesign
+    - name: build ios ipa
+      run: |
+          cd build/ios/iphoneos
+          mkdir Payload
+          cd Payload
+          ln -s ../Runner.app
+          cd ..
+          zip -r app.ipa Payload
     - name: Upload iPA
       uses: actions/upload-artifact@master
       with:
         name: ios-build
-        path: build/ios/iphoneos
+        path: build/ios/iphoneos/*.ipa
   build_apk:
     name: Build Flutter (Android)
     runs-on: ubuntu-latest
