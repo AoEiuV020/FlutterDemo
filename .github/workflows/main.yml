@@ -57,7 +57,7 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: web-build
-        path: build/$BUILD_NAME_WITH_VERSION-web.zip
+        path: build/${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
   build_ios:
     needs: [build_env]
     name: Build Flutter (iOS)
