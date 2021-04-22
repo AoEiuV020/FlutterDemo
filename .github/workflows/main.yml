@@ -5,9 +5,15 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.github/workflows/*'
+      - '!.github/workflows/*main.yml'
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - '.github/workflows/*'
+      - '!.github/workflows/*main.yml'
 jobs:
   build_env:
     name: build env
