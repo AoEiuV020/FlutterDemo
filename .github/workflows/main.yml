@@ -94,7 +94,7 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: ios-build
-        path: build/ios/iphoneos/$BUILD_NAME_WITH_VERSION-ios.ipa
+        path: build/ios/iphoneos/${{ env.BUILD_NAME_WITH_VERSION }}-ios.ipa
   build_android:
     needs: [build_env]
     name: Build Flutter (Android)
@@ -128,7 +128,7 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: android-build
-        path: build/$BUILD_NAME_WITH_VERSION-android.apk
+        path: build/${{ env.BUILD_NAME_WITH_VERSION }}-android.apk
   release:
     needs: [build_env, build_web, build_ios, build_android]
     name: make release
@@ -160,8 +160,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: $BUILD_VERSION
-        release_name: $BUILD_VERSION
+        tag_name: ${{ env.BUILD_VERSION }}
+        release_name: ${{ env.BUILD_VERSION }}
         body: ${{ github.event.commits[0].message }}
         draft: true
         prerelease: false
@@ -171,8 +171,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: $BUILD_NAME_WITH_VERSION-web.zip
-        asset_name: $BUILD_NAME_WITH_VERSION-web.zip
+        asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
+        asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
         asset_content_type: application/zip
     - name: Upload Release Asset ios
       uses: actions/upload-release-asset@v1
@@ -180,8 +180,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: $BUILD_NAME_WITH_VERSION-ios.ipa
-        asset_name: $BUILD_NAME_WITH_VERSION-ios.ipa
+        asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-ios.ipa
+        asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-ios.ipa
         asset_content_type: application/zip
     - name: Upload Release Asset android
       uses: actions/upload-release-asset@v1
@@ -189,8 +189,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: $BUILD_NAME_WITH_VERSION-android.apk
-        asset_name: $BUILD_NAME_WITH_VERSION-android.apk
+        asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-android.apk
+        asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-android.apk
         asset_content_type: application/zip
     - name: public release
       uses: eregon/publish-release@v1
