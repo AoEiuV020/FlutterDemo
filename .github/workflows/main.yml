@@ -123,10 +123,15 @@ jobs:
           channel: 'stable'
     - run: flutter pub get
     - name: sign config
+      env:
+        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      if: ${{ env.SIGNING_KEY != '' }}
       run: |
-          echo "${{ secrets.SIGNING_KEY }}" |base64 -d > android/signing.jks
-          echo "${{ secrets.KEY_PROPERTIES }}" > android/key.properties
-          echo storeFile=signing.jks >> android/key.properties
+          cd android/
+          echo "${{ secrets.SIGNING_KEY }}" |base64 -d > signing.jks
+          echo "${{ secrets.KEY_PROPERTIES }}" > key.properties
+          echo storeFile=signing.jks >> key.properties
+          ./gradlew signingReport
     - run: |
           flutter build apk --target-platform android-arm64
           mv build/app/outputs/apk/release/*.apk build/$BUILD_NAME_WITH_VERSION-android.apk
