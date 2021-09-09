@@ -5,6 +5,7 @@ script_dir=$(cd $(dirname $0);pwd)
 ROOT=$(dirname $script_dir)
 ROOT_TMP=$ROOT.tmp
 project_name=$(basename $ROOT)
+flutter_version=$(flutter --version |head -1|awk '{print $2}')
 echo update $ROOT
 mv $ROOT $ROOT_TMP
 $ROOT_TMP/script/create $ROOT
@@ -14,5 +15,6 @@ do
   mv $ROOT_TMP/$i $(dirname $i)
 done
 sed -i 's/Flutter Demo Home Page/Flutter Demo AoEiuV020/' lib/main.dart
+sed -i "s/^version: 1\.0\.0[+]1/version: ${flutter_version}+1/" pubspec.yaml
 git status
 rm -rf $ROOT_TMP
