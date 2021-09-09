@@ -1,0 +1,5 @@
+#!/bin/bash
+to=$1
+to=${to:=FlutterDemo}
+echo create demo to "$to"
+flutter create --org cc.aoeiuv020.flutter --project-name demo "$to"

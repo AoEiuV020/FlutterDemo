@@ -1,0 +1,18 @@
+#!/bin/bash
+# 自动更新flutter版本，实际是使用当前版本flutter重新创建项目，
+set -e
+script_dir=$(cd $(dirname $0);pwd)
+ROOT=$(dirname $script_dir)
+ROOT_TMP=$ROOT.tmp
+project_name=$(basename $ROOT)
+echo update $ROOT
+mv $ROOT $ROOT_TMP
+$ROOT_TMP/script/create $ROOT
+cd $ROOT
+for i in .git .github LICENSE README.md ios/README.md script
+do
+  mv $ROOT_TMP/$i $(dirname $i)
+done
+sed -i 's/Flutter Demo Home Page/Flutter Demo AoEiuV020/' lib/main.dart
+git status
+rm -rf $ROOT_TMP
