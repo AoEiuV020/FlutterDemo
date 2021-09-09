@@ -3,17 +3,19 @@ env:
     TZ: Asia/Shanghai
 on:
   push:
+    tags:
+      - '*'
     branches:
       - master
     paths-ignore:
       - '.github/workflows/*'
-      - '!.github/workflows/*main.yml'
+      - '!.github/workflows/main.yml'
   pull_request:
     branches:
       - master
     paths-ignore:
       - '.github/workflows/*'
-      - '!.github/workflows/*main.yml'
+      - '!.github/workflows/main.yml'
 jobs:
   build_env:
     name: build env
@@ -22,11 +24,33 @@ jobs:
     - name: init custom env
       run: |
           BUILD_NAME="${GITHUB_REPOSITORY#*/}"
-          BUILD_VERSION="$(date +'%Y%m%d%H%M%S')"
+          if [[ ${GITHUB_REF} == refs/tags* ]]
+          then
+              echo CREATE_RELEASE="true" >> .custom_env
+              BUILD_VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ ${GITHUB_REF} == refs/pull* ]]
+          then
+              num=${GITHUB_REF#refs/pull/}
+              num=${num%/merge}
+              BUILD_VERSION=pr-${num}-"$(date +'%Y%m%d%H%M%S')"
+          else
+              echo CREATE_RELEASE="true" >> .custom_env
+              echo PRE_RELEASE="true" >> .custom_env
+              BUILD_VERSION="$(date +'%Y%m%d%H%M%S')"
+          fi
           BUILD_NAME_WITH_VERSION="$BUILD_NAME-$BUILD_VERSION"
           echo BUILD_NAME="$BUILD_NAME" >> .custom_env
           echo BUILD_VERSION="$BUILD_VERSION" >> .custom_env
           echo BUILD_NAME_WITH_VERSION="$BUILD_NAME_WITH_VERSION" >> .custom_env
+          if test -n "${{ secrets.KEY_PROPERTIES }}"
+          then
+              echo "${{ secrets.KEY_PROPERTIES }}" > signing.properties
+              if test -n "${{ secrets.SIGNING_KEY }}"
+              then
+                  echo ANDROID_SIGN="true" >> .custom_env
+              fi
+              cat signing.properties >> .custom_env
+          fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
     - name: upload .custom_env
@@ -122,19 +146,18 @@ jobs:
       with:
           channel: 'stable'
     - run: flutter pub get
-    - name: sign config
-      env:
-        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-      if: ${{ env.SIGNING_KEY != '' }}
-      run: |
-          cd android/
-          echo "${{ secrets.SIGNING_KEY }}" |base64 -d > signing.jks
-          echo "${{ secrets.KEY_PROPERTIES }}" > key.properties
-          echo storeFile=signing.jks >> key.properties
-    - run: |
-          flutter build apk --target-platform android-arm64
-          find build/app/outputs/
-          mv build/app/outputs/apk/release/*.apk build/$BUILD_NAME_WITH_VERSION-android.apk
+    - run: flutter build apk --target-platform android-arm64
+    - uses: AoEiuV020/sign-android-release@v2
+      name: Sign release APK
+      if: ${{ env.ANDROID_SIGN == 'true' }}
+      with:
+        releaseDirectory: build/app/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ env.keyAlias }}
+        keyStorePassword: ${{ env.storePassword }}
+        keyPassword: ${{ env.keyPassword }}
+    - name: pick release file
+      run: mv build/app/outputs/apk/release/*.apk build/$BUILD_NAME_WITH_VERSION-android.apk
     - name: Upload APK
       uses: actions/upload-artifact@master
       with:
@@ -166,6 +189,7 @@ jobs:
       with:
           name: android-build
     - name: create release
+      if: ${{ env.CREATE_RELEASE == 'true' }}
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -173,10 +197,11 @@ jobs:
       with:
         tag_name: ${{ env.BUILD_VERSION }}
         release_name: ${{ env.BUILD_VERSION }}
-        body: ${{ github.event.commits[0].message }}
+        body: ${{ github.event.head_commit.message }}
         draft: true
-        prerelease: false
+        prerelease: ${{ env.PRE_RELEASE == 'true' }}
     - name: Upload Release Asset web
+      if: ${{ env.CREATE_RELEASE == 'true' }}
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -186,6 +211,7 @@ jobs:
         asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
         asset_content_type: application/zip
     - name: Upload Release Asset ios
+      if: ${{ env.CREATE_RELEASE == 'true' }}
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -195,6 +221,7 @@ jobs:
         asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-ios.ipa
         asset_content_type: application/zip
     - name: Upload Release Asset android
+      if: ${{ env.CREATE_RELEASE == 'true' }}
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -204,6 +231,7 @@ jobs:
         asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-android.apk
         asset_content_type: application/zip
     - name: public release
+      if: ${{ env.CREATE_RELEASE == 'true' }}
       uses: eregon/publish-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
