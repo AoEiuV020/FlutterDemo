@@ -1,7 +1,12 @@
 # FlutterDemo
 
 A new Flutter project.  
+flutter的demo全平台自动编译打包上传,  
+android/ios/web/windows/linux/macos  
+[![img](https://img.shields.io/github/release/AoEiuV020/FlutterDemo.svg)](https://github.com/AoEiuV020/FlutterDemo/releases)
 [![CI](https://github.com/AoEiuV020/FlutterDemo/workflows/CI/badge.svg)](https://github.com/AoEiuV020/FlutterDemo/actions)
+  
+[https://flutter.aoeiuv020.com/](https://flutter.aoeiuv020.com/)
 
 ## Getting Started
 
