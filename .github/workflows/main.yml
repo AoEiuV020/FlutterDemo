@@ -120,7 +120,7 @@ jobs:
   build_ios:
     needs: [build_env]
     name: Build Flutter (iOS)
-    runs-on: macOS-latest
+    runs-on: macos-latest
     steps:
     - name: download custom env
       uses: actions/download-artifact@v2
