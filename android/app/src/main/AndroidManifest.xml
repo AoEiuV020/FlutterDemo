@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cc.aoeiuv020.flutter.demo">
+    package="com.aoeiuv020.flutter.demo">
    <application
         android:label="demo"
         android:name="${applicationName}"

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
 set(BINARY_NAME "demo")
-set(APPLICATION_ID "cc.aoeiuv020.flutter.demo")
+set(APPLICATION_ID "com.aoeiuv020.flutter.demo")
 
 cmake_policy(SET CMP0063 NEW)
 
