@@ -147,6 +147,11 @@ jobs:
           flutter build ${{ matrix.config }} ${{ matrix.BUILD_ARGS }}
       - name: post
         run: ${{ matrix.POST_COMMAND }}
+      - name: cname
+        env:
+          CNAME: ${{ secrets.CNAME }}
+        if: "${{ matrix.name == 'web' && env.CNAME != '' }}"
+        run: echo ${{ env.CNAME }} > ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }}/CNAME
       - name: tar.gz
         if: "${{ matrix.FILE_TYPE == 'tar.gz' }}"
         uses: thedoctor0/zip-release@master
