@@ -10,7 +10,7 @@ echo update $ROOT
 mv $ROOT $ROOT_TMP
 $ROOT_TMP/script/create $ROOT
 cd $ROOT
-for i in .git .github LICENSE README.md ios/README.md windows/README.md script
+for i in .git .github LICENSE script README.md */README.md
 do
   mv $ROOT_TMP/$i $(dirname $i)
 done
