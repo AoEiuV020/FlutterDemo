@@ -180,6 +180,13 @@ jobs:
         with:
           name: ${{ matrix.name }}-build
           path: build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+      - name: Deploy
+        if: "${{ matrix.name == 'web' && env.CREATE_RELEASE == 'true' }}"
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force_orphan: true
+          publish_dir: ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }}
   release_create:
     needs: [build_app]
     name: create release
