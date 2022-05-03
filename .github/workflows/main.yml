@@ -88,6 +88,35 @@ jobs:
       with:
         name: web-build
         path: build/${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
+  build_linux:
+    needs: [build_env]
+    name: Build Flutter (Linux)
+    runs-on: ubuntu-latest
+    steps:
+    - name: download custom env
+      uses: actions/download-artifact@v2
+      with:
+          name: custom_env
+    - name: apply custom env
+      run: |
+          cat .custom_env >> $GITHUB_ENV
+          rm .custom_env
+    - uses: actions/checkout@v2
+    - uses: subosito/flutter-action@v1
+      with:
+          channel: 'stable'
+    - run: |
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release
+          cd build/linux/x64/release/bundle
+          zip -r $GITHUB_WORKSPACE/build/$BUILD_NAME_WITH_VERSION-linux.zip * .[^.]*
+    - name: Archive Production Artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: linux-build
+        path: build/${{ env.BUILD_NAME_WITH_VERSION }}-linux.zip
   build_ios:
     needs: [build_env]
     name: Build Flutter (iOS)
@@ -164,7 +193,7 @@ jobs:
         name: android-build
         path: build/${{ env.BUILD_NAME_WITH_VERSION }}-android.apk
   release:
-    needs: [build_env, build_web, build_ios, build_android]
+    needs: [build_env, build_web, build_linux, build_ios, build_android]
     name: make release
     runs-on: ubuntu-latest
     steps:
@@ -180,6 +209,10 @@ jobs:
       uses: actions/download-artifact@v2
       with:
           name: web-build
+    - name: download linux
+      uses: actions/download-artifact@v2
+      with:
+          name: linux-build
     - name: download ios
       uses: actions/download-artifact@v2
       with:
@@ -209,6 +242,16 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
         asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-web.zip
+        asset_content_type: application/zip
+    - name: Upload Release Asset linux
+      if: ${{ env.CREATE_RELEASE == 'true' }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-linux.zip
+        asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-linux.zip
         asset_content_type: application/zip
     - name: Upload Release Asset ios
       if: ${{ env.CREATE_RELEASE == 'true' }}
