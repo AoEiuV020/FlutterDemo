@@ -1,5 +1,4 @@
 #!/bin/bash
-# 自动更新flutter版本，实际是使用当前版本flutter重新创建项目，
 set -e
 script_dir=$(cd $(dirname $0);pwd)
 ROOT=$(dirname $script_dir)
@@ -9,11 +8,12 @@ flutter_version=$(flutter --version |head -1|awk '{print $2}')
 echo update $ROOT
 mv $ROOT $ROOT_TMP
 $ROOT_TMP/script/create $ROOT
-cd $ROOT
-for i in .git .github LICENSE README.md ios/README.md windows/README.md script
+cd $ROOT_TMP
+for i in .git .github LICENSE script README.md */README.md
 do
-  mv $ROOT_TMP/$i $(dirname $i)
+  mv $ROOT_TMP/$i $ROOT/$(dirname $i)
 done
+cd $ROOT
 sed -i 's/Flutter Demo Home Page/Flutter Demo AoEiuV020/' lib/main.dart
 sed -i "s/^version: 1\.0\.0[+]1/version: ${flutter_version}+1/" pubspec.yaml
 git status
