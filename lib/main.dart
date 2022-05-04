@@ -2,13 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' show parse;
 
 Future<String> fetchContent(http.Client client) async {
   final response = await client
       .get(Uri.parse('https://example.com/'));
 
   if (response.statusCode == 200) {
-    return response.body;
+    var document = parse(response.body);
+    return document.querySelector('body > div > p')!.text;
   } else {
     throw Exception('Failed to load content');
   }
