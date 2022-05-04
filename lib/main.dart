@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'mixed.dart';
+import 'get.dart';
 
 void main() => runApp(const MyApp());
 
@@ -15,12 +16,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final Future<String> futureContent;
+  late Future<String> futureContent;
+  final defaultUrl = "https://example.com/";
+  final urlController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    futureContent = fetchContent(http.Client());
+    futureContent = fetchUrl(http.Client(), defaultUrl);
   }
 
   @override
@@ -34,20 +37,46 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Fetch Data Example'),
         ),
-        body: Center(
-          child: FutureBuilder<String>(
-            future: futureContent,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text(snapshot.requireData);
-              } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
-              }
-
-              // By default, show a loading spinner.
-              return const CircularProgressIndicator();
-            },
+        body: Column(children: [
+          TextField(
+            controller: urlController,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              hintText: defaultUrl,
+            ),
           ),
+          Flexible(
+            flex: 1,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: FutureBuilder<String>(
+                future: futureContent,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text(
+                      snapshot.requireData,
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text('${snapshot.error}');
+                  }
+                  // By default, show a loading spinner.
+                  return const CircularProgressIndicator();
+                },
+              ),
+            ),
+          ),
+        ]),
+        floatingActionButton: FloatingActionButton(
+          // When the user presses the button, show an alert dialog containing
+          // the text that the user has entered into the text field.
+          onPressed: () {
+            log('onPressed: ${urlController.text}');
+            setState(() {
+              futureContent = fetchUrl(http.Client(), urlController.text);
+            });
+          },
+          tooltip: 'Show me the value!',
+          child: const Icon(Icons.keyboard_return),
         ),
       ),
     );
