@@ -97,6 +97,7 @@ jobs:
             config: web
             os: ubuntu-latest
             FILE_TYPE: zip
+            BUILD_ARGS: "--pwa-strategy=none"
             RELEASE_PATH: .
             RELEASE_DIRECTORY: build/web
           - name: linux
