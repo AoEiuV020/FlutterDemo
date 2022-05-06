@@ -17,7 +17,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late Future<String> futureContent;
-  final defaultUrl = "https://example.com/";
+  final defaultUrl = "https://jsonplaceholder.typicode.com/albums/1";
   final urlController = TextEditingController();
 
   @override
