@@ -10,6 +10,7 @@ void connect(String url, Function(String) handler) {
   var socket = io.io(url, <String, dynamic>{
     'transports': ['websocket'],
     'autoConnect': false,
+    'forceNew': true,
   });
   socket.onConnect((_) {
     handler('connect');
