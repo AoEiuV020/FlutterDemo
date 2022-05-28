@@ -8,7 +8,8 @@ void main() {
 
 void connect(String url, Function(String) handler) {
   var socket = io.io(url, <String, dynamic>{
-    'transports': ['websocket']
+    'transports': ['websocket'],
+    'autoConnect': false,
   });
   socket.onConnect((_) {
     handler('connect');
@@ -19,6 +20,6 @@ void connect(String url, Function(String) handler) {
   socket.onConnectTimeout((data) => handler("connect timeout: $data"));
   socket.on('event', (data) => handler("event: $data"));
   socket.onDisconnect((_) => handler('disconnect'));
-  socket.on('close', (_) => socket.disconnect());
+  socket.on('close', (_) => socket.close());
   socket.open();
 }
