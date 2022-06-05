@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-String testData() {
+String testData(String input) {
   var sb = StringBuffer();
   Map<String, Endian?> endianMap = {
     "null": null,
@@ -8,7 +8,7 @@ String testData() {
     "little": Endian.little,
     "host": Endian.host,
   };
-  var number = 0x12345678;
+  var number = int.parse(input);
   endianMap.forEach((endianName, endian) {
     var byteArray = Uint8List(4);
     var byteData = byteArray.buffer.asByteData();
