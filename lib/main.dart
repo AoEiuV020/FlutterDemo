@@ -33,7 +33,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final defaultUrl = "http://localhost:3000";
+  final defaultUrl = "http://localhost:3000/sub";
   final urlController = TextEditingController();
   final sb = StringBuffer();
   late Function(String) handler;

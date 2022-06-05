@@ -1,7 +1,8 @@
 import 'package:socket_io/socket_io.dart';
 
 void start() {
-  var io = Server();
+  var server = Server();
+  var io = server.of("sub");
   io.on('connection', (client) {
     print('connection');
     client.on('msg', (data) {
@@ -13,5 +14,5 @@ void start() {
       print('disconnect');
     });
   });
-  io.listen(3000);
+  server.listen(3000);
 }
