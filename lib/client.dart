@@ -1,6 +1,5 @@
-import 'package:demo/connect/connect.dart'
-    if (dart.library.html) 'package:demo/connect/connect_web.dart'
-    if (dart.library.io) 'package:demo/connect/connect_native.dart';
+import 'package:demo/connect/connect_native.dart'
+    if (dart.library.html) 'package:demo/connect/connect_web.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
