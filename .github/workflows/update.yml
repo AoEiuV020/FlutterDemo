@@ -1,0 +1,31 @@
+
+name: update
+env:
+    TZ: Asia/Shanghai
+
+on:
+  push:
+    paths:
+      - '.github/workflows/update.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: subosito/flutter-action@v1
+      with:
+          channel: 'stable'
+    - name: update
+      run: |
+         ./script/update
+         cd $PWD
+         git add .
+         curl -L 'https://github.com/AoEiuV020/rc/raw/master/linux/init.sh' |bash
+         version=$(flutter --version |head -1 |awk '{print $2}')
+         git commit -m "update fluttter $version"
+         git tag $version
+         git push --atomic origin master $version
+         
