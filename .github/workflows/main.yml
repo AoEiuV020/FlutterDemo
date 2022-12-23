@@ -12,6 +12,7 @@ on:
       - '**/README.md'
       - '.github/workflows/*'
       - '!.github/workflows/main.yml'
+  workflow_dispatch:
 jobs:
   build_env:
     name: build env
