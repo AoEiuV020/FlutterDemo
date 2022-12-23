@@ -54,7 +54,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late Future<String> futureContent;
-  final defaultUrl = "https://jsonplaceholder.typicode.com/albums/1";
+  final defaultUrl = "https://main.aoeiuv020.com/info.php";
   final urlController = TextEditingController();
 
   @override
