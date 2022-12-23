@@ -20,6 +20,7 @@ jobs:
           channel: 'stable'
     - name: update
       run: |
+         flutter --version
          ./script/update
          cd $PWD
          git add .
