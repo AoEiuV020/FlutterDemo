@@ -272,7 +272,7 @@ jobs:
           - name: ios
             FILE_TYPE: ipa
           - name: macos
-            FILE_TYPE: zip
+            FILE_TYPE: dmg
       # Disable fail-fast; we want results from all OSes even if one fails.
       fail-fast: false
     steps:
