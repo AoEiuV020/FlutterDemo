@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:demo/csv.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -48,16 +51,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final csvController = TextEditingController();
+  final jsonController = TextEditingController();
 
-  void _incrementCounter() {
+  void start() {
+    var result = csvToMap(csvController.text);
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      jsonController.text = const JsonEncoder.withIndent('  ').convert(result);
     });
   }
 
@@ -95,20 +95,31 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            TextField(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'ikuai dhcp csv',
+              ),
+              maxLines: 6,
+              minLines: 3,
+              controller: csvController,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            TextField(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'json',
+              ),
+              maxLines: 6,
+              minLines: 3,
+              controller: jsonController,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: start,
+        tooltip: 'Start',
+        child: const Icon(Icons.start),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
