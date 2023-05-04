@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:util/util.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +50,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  Awesome awesome = Awesome();
 
   void _incrementCounter() {
     setState(() {
@@ -101,6 +103,9 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+             Text(
+              'awesome: ${awesome.isAwesome}',
             ),
           ],
         ),

@@ -1,3 +1,5 @@
-int calculate() {
-  return 6 * 7;
+import 'package:util/util.dart';
+
+bool awesome() {
+  return Awesome().isAwesome;
 }
