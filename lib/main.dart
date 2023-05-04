@@ -55,10 +55,17 @@ class _MyHomePageState extends State<MyHomePage> {
   final jsonController = TextEditingController();
 
   void start() {
-    var result = csvToMap(csvController.text);
-    setState(() {
-      jsonController.text = const JsonEncoder.withIndent('  ').convert(result);
-    });
+    if (csvController.text.isNotEmpty) {
+      var result = csvToJson(csvController.text);
+      setState(() {
+        jsonController.text = result;
+      });
+    } else if (jsonController.text.isNotEmpty) {
+      var result = jsonToCsv(jsonController.text);
+      setState(() {
+        csvController.text = result;
+      });
+    }
   }
 
   @override
