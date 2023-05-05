@@ -14,7 +14,7 @@ do
   mv $ROOT_TMP/$i $ROOT/$(dirname $i)
 done
 cd $ROOT
-sed -i 's/Flutter Demo Home Page/Flutter Demo AoEiuV020/' lib/main.dart
+sed -i 's/Sample Items/Sample Items AoEiuV020/' lib/src/sample_feature/sample_item_list_view.dart
 sed -i "s/^version: 1\.0\.0[+]1/version: ${flutter_version}+1/" pubspec.yaml
 git status
 rm -rf $ROOT_TMP
