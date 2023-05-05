@@ -71,7 +71,7 @@ class MyApp extends StatelessWidget {
                     return SettingsView(controller: settingsController);
                   case SampleItemDetailsView.routeName:
                     String str = routeSettings.arguments as String;
-                    return SampleItemDetailsView(str);
+                    return SampleItemDetailsView.create(str);
                   case SampleItemListView.routeName:
                   default:
                     return const SampleItemListView();
