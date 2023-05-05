@@ -2,4 +2,4 @@
 to=$1
 to=${to:=FlutterDemo}
 echo create demo to "$to"
-flutter create --org com.aoeiuv020.flutter --project-name demo "$to"
+flutter create --template skeleton --org com.aoeiuv020.flutter --project-name demo "$to"
