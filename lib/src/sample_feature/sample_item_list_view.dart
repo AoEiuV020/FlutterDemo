@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../settings/settings_view.dart';
+import '../util/json.dart';
 import 'sample_item.dart';
 import 'sample_item_details_view.dart';
 
@@ -61,6 +62,7 @@ class SampleItemListView extends StatelessWidget {
               Navigator.restorablePushNamed(
                 context,
                 SampleItemDetailsView.routeName,
+                arguments: jsonToString(item),
               );
             }
           );
