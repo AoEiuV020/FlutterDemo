@@ -17,8 +17,12 @@ class SampleItemListView extends StatelessWidget {
 
   final Directory currentDirectory;
 
-  Future<List<SampleItem>> getListFuture() {
-    return currentDirectory.list().map((event) => SampleItem(event)).toList();
+  Future<List<SampleItem>> getListFuture() async {
+    var list = await currentDirectory.list()
+        .map((event) => SampleItem(event))
+        .toList();
+    list.sort((a, b) => a.entity.path.compareTo(b.entity.path));
+    return list;
   }
 
   @override
