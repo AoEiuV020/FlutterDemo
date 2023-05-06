@@ -75,7 +75,8 @@ class MyApp extends StatelessWidget {
                     return const SampleItemDetailsView();
                   case SampleItemListView.routeName:
                   default:
-                    return SampleItemListView(currentDirectory: Directory("."));
+                    var path = routeSettings.arguments as String? ?? ".";
+                    return SampleItemListView(currentDirectory: Directory(path));
                 }
               },
             );

@@ -60,17 +60,26 @@ class SampleItemListView extends StatelessWidget {
               itemCount: items.length,
               itemBuilder: (BuildContext context, int index) {
                 final item = items[index];
-                var isFile = item.entity is File;
 
                 return ListTile(
                     title: Text(item.entity.path),
-                    leading: isFile ? const Icon(Icons.file_open) : const Icon(Icons.folder_open),
+                    leading: item.entity is Directory
+                        ? const Icon(Icons.folder_open)
+                        : const Icon(Icons.file_open),
                     onTap: () {
-                      Navigator.restorablePushNamed(
-                        context,
-                        SampleItemDetailsView.routeName,
-                        arguments: item.entity.path,
-                      );
+                      if (item.entity is Directory) {
+                        Navigator.restorablePushNamed(
+                          context,
+                          SampleItemListView.routeName,
+                          arguments: item.entity.path,
+                        );
+                      } else {
+                        Navigator.restorablePushNamed(
+                          context,
+                          SampleItemDetailsView.routeName,
+                          arguments: item.entity.path,
+                        );
+                      }
                     });
               },
             );
