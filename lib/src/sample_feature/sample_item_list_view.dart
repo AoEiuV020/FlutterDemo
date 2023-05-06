@@ -77,7 +77,7 @@ class SampleItemListView extends StatelessWidget {
                 final item = items[index];
 
                 return ListTile(
-                    title: Text(item.entity.path),
+                    title: Text(item.getName()),
                     leading: item.entity is Directory
                         ? const Icon(Icons.folder_open)
                         : const Icon(Icons.file_open),
