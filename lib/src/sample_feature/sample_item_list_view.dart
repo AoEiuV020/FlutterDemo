@@ -21,7 +21,15 @@ class SampleItemListView extends StatelessWidget {
     var list = await currentDirectory.list()
         .map((event) => SampleItem(event))
         .toList();
-    list.sort((a, b) => a.entity.path.compareTo(b.entity.path));
+    list.sort((a, b) {
+      if (a.entity is Directory && b.entity is! Directory) {
+        return -1;
+      }
+      if (a.entity is! Directory && b.entity is Directory) {
+        return 1;
+      }
+      return a.entity.path.compareTo(b.entity.path);
+    });
     return list;
   }
 
@@ -53,9 +61,12 @@ class SampleItemListView extends StatelessWidget {
           future: getListFuture(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return const Text("no data");
+              return Text("loading ${currentDirectory.path}");
             }
             var items = snapshot.data!;
+            if (items.isEmpty) {
+              return const Text("no data");
+            }
             return ListView.builder(
               // Providing a restorationId allows the ListView to restore the
               // scroll position when a user leaves and returns to the app after it
