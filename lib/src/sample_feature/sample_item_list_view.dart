@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
@@ -18,7 +19,8 @@ class SampleItemListView extends StatelessWidget {
   final Directory currentDirectory;
 
   Future<List<SampleItem>> getListFuture() async {
-    var list = await currentDirectory.list()
+    var list = await currentDirectory
+        .list()
         .map((event) => SampleItem(event))
         .toList();
     list.sort((a, b) {
@@ -37,7 +39,7 @@ class SampleItemListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sample Items AoEiuV020'),
+        title: Text(absolute(currentDirectory.path)),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -60,6 +62,9 @@ class SampleItemListView extends StatelessWidget {
       body: FutureBuilder(
           future: getListFuture(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text("${snapshot.error}");
+            }
             if (!snapshot.hasData) {
               return Text("loading ${currentDirectory.path}");
             }

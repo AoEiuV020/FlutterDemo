@@ -18,6 +18,13 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
 
+  String getDefaultPath() {
+    if (Platform.isAndroid) {
+      return "/sdcard";
+    }
+    return ".";
+  }
+
   @override
   Widget build(BuildContext context) {
     // Glue the SettingsController to the MaterialApp.
@@ -75,8 +82,10 @@ class MyApp extends StatelessWidget {
                     return const SampleItemDetailsView();
                   case SampleItemListView.routeName:
                   default:
-                    var path = routeSettings.arguments as String? ?? ".";
-                    return SampleItemListView(currentDirectory: Directory(path));
+                    var path =
+                        routeSettings.arguments as String? ?? getDefaultPath();
+                    return SampleItemListView(
+                        currentDirectory: Directory(path));
                 }
               },
             );
