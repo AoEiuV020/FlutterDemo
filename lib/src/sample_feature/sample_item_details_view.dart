@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 
@@ -13,6 +14,7 @@ class SampleItemDetailsView extends StatelessWidget {
   final File currentFile;
 
   Future<String> getFuture() async {
+    log("${Isolate.current.debugName}> getFuture");
     try {
       return currentFile.readAsStringSync();
     } on FileSystemException catch (_) {
@@ -21,13 +23,18 @@ class SampleItemDetailsView extends StatelessWidget {
   }
 
   Stream<String> getStream() {
-    log("getStream");
-    return currentFile.openRead().transform(const StringConverter());
+    log("${Isolate.current.debugName}> getStream");
+    List<int> previous = [];
+    return currentFile.openRead().map((event) {
+      log("${Isolate.current.debugName}> map: ${event.length}");
+      var ret = previous + event;
+      previous = ret;
+      return ret;
+    }).transform(const StringConverter());
   }
 
   @override
   Widget build(BuildContext context) {
-    var sb = StringBuffer();
     return Scaffold(
       appBar: AppBar(
         title: Text(currentFile.path),
@@ -42,11 +49,9 @@ class SampleItemDetailsView extends StatelessWidget {
               if (!snapshot.hasData) {
                 return Text("loading ${currentFile.path}");
               }
-              log("snapshot: ${snapshot.requireData.length}");
-              sb.write(snapshot.requireData);
-              log("sb: ${sb.length}");
+              log("${Isolate.current.debugName}> snapshot: ${snapshot.requireData.length}");
               return SingleChildScrollView(
-                child: Text(sb.toString()),
+                child: Text(snapshot.requireData),
               );
             }),
       ),
@@ -59,13 +64,13 @@ class StringConverter extends Converter<List<int>, String> {
 
   @override
   String convert(List<int> input) {
-    log("convert");
+    log("${Isolate.current.debugName}> convert");
     return String.fromCharCodes(input);
   }
 
   @override
   Sink<List<int>> startChunkedConversion(Sink<String> sink) {
-    log("startChunkedConversion");
+    log("${Isolate.current.debugName}> startChunkedConversion");
     return StringSink(sink);
   }
 }
@@ -77,13 +82,13 @@ class StringSink extends Sink<List<int>> {
 
   @override
   void add(List<int> data) {
-    log("add: ${data.length}");
+    log("${Isolate.current.debugName}> add: ${data.length}");
     sink.add(String.fromCharCodes(data));
   }
 
   @override
   void close() {
-    log("close");
+    log("${Isolate.current.debugName}> close");
     sink.close();
   }
 }
