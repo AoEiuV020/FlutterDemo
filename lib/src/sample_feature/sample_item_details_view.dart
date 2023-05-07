@@ -18,7 +18,7 @@ class SampleItemDetailsView extends StatelessWidget {
         title: Text(currentFile.path),
       ),
       body: Center(
-        child: Text(basename(currentFile.path)),
+        child: Text(currentFile.readAsStringSync()),
       ),
     );
   }
