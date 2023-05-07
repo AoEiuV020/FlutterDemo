@@ -11,6 +11,14 @@ class SampleItemDetailsView extends StatelessWidget {
 
   final File currentFile;
 
+  Future<String> getFuture() async {
+    try {
+      return currentFile.readAsStringSync();
+    } on FileSystemException catch(_) {
+      return String.fromCharCodes(currentFile.readAsBytesSync());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,8 +26,19 @@ class SampleItemDetailsView extends StatelessWidget {
         title: Text(currentFile.path),
       ),
       body: Center(
-        child: SingleChildScrollView(
-          child: Text(currentFile.readAsStringSync()),
+        child: FutureBuilder(
+          future: getFuture(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text("${snapshot.error}");
+            }
+            if (!snapshot.hasData) {
+              return Text("loading ${currentFile.path}");
+            }
+            return SingleChildScrollView(
+              child: Text(snapshot.requireData),
+            );
+          }
         ),
       ),
     );
