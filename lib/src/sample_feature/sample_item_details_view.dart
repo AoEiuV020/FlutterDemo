@@ -26,17 +26,14 @@ class SampleItemDetailsView extends StatelessWidget {
   Stream<String> getStream() {
     log("${Isolate.current.debugName}> getStream");
     return currentFile.openRead().asyncMap((event) async {
-      log("${Isolate.current.debugName}> asyncMap add: ${event.length}");
-      var ret = previous + event;
-      previous = ret;
-      return ret;
-    }).asyncMap((event) async {
       log("${Isolate.current.debugName}> asyncMap dataToString: ${event.length}");
-      return compute(dataToString, event);
+      var str = await compute(dataToString, event);
+      items.add(str);
+      return str;
     });
   }
 
-  List<int> previous = [];
+  List<String> items = [];
 
   String dataToString(List<int> data) {
     log("${Isolate.current.debugName}> dataToString, data.length=${data.length}");
@@ -60,8 +57,10 @@ class SampleItemDetailsView extends StatelessWidget {
                 return Text("loading ${currentFile.path}");
               }
               log("${Isolate.current.debugName}> snapshot: ${snapshot.requireData.length}");
-              return SingleChildScrollView(
-                child: Text(snapshot.requireData),
+              log("${Isolate.current.debugName}> items: ${items.length}");
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) => Text(items[index]),
               );
             }),
       ),
