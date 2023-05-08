@@ -14,6 +14,12 @@ class SampleItemDetailsView extends StatelessWidget {
 
   final File currentFile;
 
+  Stream<T> flattenStreams<T>(Stream<Stream<T>> source) async* {
+    await for (var stream in source) {
+      yield* stream;
+    }
+  }
+
   Future<String> getFuture() async {
     log("${Isolate.current.debugName}> getFuture");
     try {
@@ -23,21 +29,24 @@ class SampleItemDetailsView extends StatelessWidget {
     }
   }
 
-  Stream<String> getStream() {
+  Stream<List<String>> getStream() {
     log("${Isolate.current.debugName}> getStream");
-    return currentFile.openRead().asyncMap((event) async {
+    return flattenStreams(currentFile.openRead().asyncMap((event) async {
       log("${Isolate.current.debugName}> asyncMap dataToString: ${event.length}");
       var str = await compute(dataToString, event);
-      items.add(str);
       return str;
+    })).map((event) {
+      items.add(event);
+      return items;
     });
   }
 
   List<String> items = [];
 
-  String dataToString(List<int> data) {
+  Stream<String> dataToString(List<int> data) {
     log("${Isolate.current.debugName}> dataToString, data.length=${data.length}");
-    return String.fromCharCodes(data);
+    return Stream.fromIterable([String.fromCharCodes(data)])
+        .transform(const LineSplitter());
   }
 
   @override
@@ -56,11 +65,19 @@ class SampleItemDetailsView extends StatelessWidget {
               if (!snapshot.hasData) {
                 return Text("loading ${currentFile.path}");
               }
-              log("${Isolate.current.debugName}> snapshot: ${snapshot.requireData.length}");
-              log("${Isolate.current.debugName}> items: ${items.length}");
+              var data = snapshot.requireData;
+              log("${Isolate.current.debugName}> data: ${data.length}");
               return ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) => Text(items[index]),
+                itemCount: data.length,
+                itemBuilder: (context, index) => ListTile(
+                    title: Text(data[index]),
+                    leading: const CircleAvatar(
+                      foregroundImage:
+                          AssetImage('assets/images/flutter_logo.png'),
+                    ),
+                    onTap: () {
+                      log("onTap");
+                    }),
               );
             }),
       ),
