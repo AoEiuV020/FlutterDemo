@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Displays detailed information about a SampleItem.
 class SampleItemDetailsView extends StatelessWidget {
-  SampleItemDetailsView(this.currentFile, {super.key});
+  const SampleItemDetailsView(this.currentFile, {super.key});
 
   static const routeName = '/sample_item';
 
@@ -31,8 +32,10 @@ class SampleItemDetailsView extends StatelessWidget {
 
   Stream<List<String>> getStream() {
     log("${Isolate.current.debugName}> getStream");
+    List<String> items = [];
     return flattenStreams(currentFile.openRead().asyncMap((event) async {
-      log("${Isolate.current.debugName}> asyncMap dataToString: ${event.length}");
+      log("${Isolate.current.debugName}> asyncMap dataToString: ${event
+          .length}");
       var str = await compute(dataToString, event);
       return str;
     })).map((event) {
@@ -41,12 +44,11 @@ class SampleItemDetailsView extends StatelessWidget {
     });
   }
 
-  List<String> items = [];
-
   Stream<String> dataToString(List<int> data) {
-    log("${Isolate.current.debugName}> dataToString, data.length=${data.length}");
+    log("${Isolate.current.debugName}> dataToString, data.length=${data
+        .length}");
     return Stream.fromIterable([String.fromCharCodes(data)])
-        .transform(const LineSplitter());
+        .transform(const StringConverter());
   }
 
   @override
@@ -69,15 +71,16 @@ class SampleItemDetailsView extends StatelessWidget {
               log("${Isolate.current.debugName}> data: ${data.length}");
               return ListView.builder(
                 itemCount: data.length,
-                itemBuilder: (context, index) => ListTile(
-                    title: Text(data[index]),
-                    leading: const CircleAvatar(
-                      foregroundImage:
+                itemBuilder: (context, index) =>
+                    ListTile(
+                        title: Text(data[index]),
+                        leading: const CircleAvatar(
+                          foregroundImage:
                           AssetImage('assets/images/flutter_logo.png'),
-                    ),
-                    onTap: () {
-                      log("onTap");
-                    }),
+                        ),
+                        onTap: () {
+                          log("onTap");
+                        }),
               );
             }),
       ),
@@ -85,31 +88,35 @@ class SampleItemDetailsView extends StatelessWidget {
   }
 }
 
-class StringConverter extends Converter<List<int>, String> {
+class StringConverter extends Converter<String, String> {
   const StringConverter();
 
   @override
-  String convert(List<int> input) {
+  String convert(String input) {
     log("${Isolate.current.debugName}> convert");
-    return String.fromCharCodes(input);
+    // unreachable,
+    return input;
   }
 
   @override
-  Sink<List<int>> startChunkedConversion(Sink<String> sink) {
+  Sink<String> startChunkedConversion(Sink<String> sink) {
     log("${Isolate.current.debugName}> startChunkedConversion");
     return StringSink(sink);
   }
 }
 
-class StringSink extends Sink<List<int>> {
+class StringSink extends Sink<String> {
   StringSink(this.sink);
 
   final Sink<String> sink;
 
   @override
-  void add(List<int> data) {
+  void add(String data) {
     log("${Isolate.current.debugName}> add: ${data.length}");
-    sink.add(String.fromCharCodes(data));
+    const max = 1000;
+    for (int i = 0; i < data.length; i += max) {
+      sink.add(data.substring(i, math.min(i + max, data.length)));
+    }
   }
 
   @override
