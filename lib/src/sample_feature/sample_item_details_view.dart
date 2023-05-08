@@ -3,11 +3,12 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Displays detailed information about a SampleItem.
 class SampleItemDetailsView extends StatelessWidget {
-  const SampleItemDetailsView(this.currentFile, {super.key});
+  SampleItemDetailsView(this.currentFile, {super.key});
 
   static const routeName = '/sample_item';
 
@@ -24,13 +25,22 @@ class SampleItemDetailsView extends StatelessWidget {
 
   Stream<String> getStream() {
     log("${Isolate.current.debugName}> getStream");
-    List<int> previous = [];
-    return currentFile.openRead().map((event) {
-      log("${Isolate.current.debugName}> map: ${event.length}");
+    return currentFile.openRead().asyncMap((event) async {
+      log("${Isolate.current.debugName}> asyncMap add: ${event.length}");
       var ret = previous + event;
       previous = ret;
       return ret;
-    }).transform(const StringConverter());
+    }).asyncMap((event) async {
+      log("${Isolate.current.debugName}> asyncMap dataToString: ${event.length}");
+      return compute(dataToString, event);
+    });
+  }
+
+  List<int> previous = [];
+
+  String dataToString(List<int> data) {
+    log("${Isolate.current.debugName}> dataToString, data.length=${data.length}");
+    return String.fromCharCodes(data);
   }
 
   @override
