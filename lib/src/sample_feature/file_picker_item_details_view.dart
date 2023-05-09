@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:demo/src/sample_feature/debug.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,14 +21,15 @@ class FilePickerItemDetailsView extends StatelessWidget {
   }
 
   Stream<List<String>> getStream() {
-    log("${Isolate.current.debugName}> getStream");
+    log("${getIsolateName()}> getStream");
     List<String> items = [];
     return flattenStreams(currentFile.readStream!.asyncMap((event) async {
-      log("${Isolate.current.debugName}> asyncMap dataToString: ${event.length}");
+      log("${getIsolateName()}> asyncMap dataToString: ${event.length}");
       var str = await compute(dataToString, event);
       return str;
     })).map((event) {
       items.add(event);
+      log("${getIsolateName()}> map add items: ${items.length}");
       return items;
     });
   }
@@ -47,10 +48,10 @@ class FilePickerItemDetailsView extends StatelessWidget {
                 return Text("${snapshot.error}");
               }
               if (!snapshot.hasData) {
-                return Text("loading ${currentFile.path}");
+                return Text("loading ${currentFile.name}");
               }
               var data = snapshot.requireData;
-              log("${Isolate.current.debugName}> data: ${data.length}");
+              log("${getIsolateName()}> data: ${data.length}");
               return ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, index) => ListTile(
@@ -74,20 +75,20 @@ class StringConverter extends Converter<String, String> {
 
   @override
   String convert(String input) {
-    log("${Isolate.current.debugName}> convert");
+    log("${getIsolateName()}> convert");
     // unreachable,
     return input;
   }
 
   @override
   Sink<String> startChunkedConversion(Sink<String> sink) {
-    log("${Isolate.current.debugName}> startChunkedConversion");
+    log("${getIsolateName()}> startChunkedConversion");
     return StringSink(sink);
   }
 }
 
 Stream<String> dataToString(List<int> data) {
-  log("${Isolate.current.debugName}> dataToString, data.length=${data.length}");
+  log("${getIsolateName()}> dataToString, data.length=${data.length}");
   return Stream.fromIterable([String.fromCharCodes(data)])
       .transform(const StringConverter());
 }
@@ -99,7 +100,7 @@ class StringSink extends Sink<String> {
 
   @override
   void add(String data) {
-    log("${Isolate.current.debugName}> add: ${data.length}");
+    log("${getIsolateName()}> add: ${data.length}");
     const max = 1000;
     for (int i = 0; i < data.length; i += max) {
       sink.add(data.substring(i, math.min(i + max, data.length)));
@@ -108,7 +109,7 @@ class StringSink extends Sink<String> {
 
   @override
   void close() {
-    log("${Isolate.current.debugName}> close");
+    log("${getIsolateName()}> close");
     sink.close();
   }
 }

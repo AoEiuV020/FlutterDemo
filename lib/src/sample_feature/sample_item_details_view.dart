@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'debug.dart';
 
 /// Displays detailed information about a SampleItem.
 class SampleItemDetailsView extends StatelessWidget {
@@ -22,7 +23,7 @@ class SampleItemDetailsView extends StatelessWidget {
   }
 
   Future<String> getFuture() async {
-    log("${Isolate.current.debugName}> getFuture");
+    log("${getIsolateName()}> getFuture");
     try {
       return currentFile.readAsStringSync();
     } on FileSystemException catch (_) {
@@ -31,11 +32,10 @@ class SampleItemDetailsView extends StatelessWidget {
   }
 
   Stream<List<String>> getStream() {
-    log("${Isolate.current.debugName}> getStream");
+    log("${getIsolateName()}> getStream");
     List<String> items = [];
     return flattenStreams(currentFile.openRead().asyncMap((event) async {
-      log("${Isolate.current.debugName}> asyncMap dataToString: ${event
-          .length}");
+      log("${getIsolateName()}> asyncMap dataToString: ${event.length}");
       var str = await compute(dataToString, event);
       return str;
     })).map((event) {
@@ -45,8 +45,7 @@ class SampleItemDetailsView extends StatelessWidget {
   }
 
   Stream<String> dataToString(List<int> data) {
-    log("${Isolate.current.debugName}> dataToString, data.length=${data
-        .length}");
+    log("${getIsolateName()}> dataToString, data.length=${data.length}");
     return Stream.fromIterable([String.fromCharCodes(data)])
         .transform(const StringConverter());
   }
@@ -68,19 +67,18 @@ class SampleItemDetailsView extends StatelessWidget {
                 return Text("loading ${currentFile.path}");
               }
               var data = snapshot.requireData;
-              log("${Isolate.current.debugName}> data: ${data.length}");
+              log("${getIsolateName()}> data: ${data.length}");
               return ListView.builder(
                 itemCount: data.length,
-                itemBuilder: (context, index) =>
-                    ListTile(
-                        title: Text(data[index]),
-                        leading: const CircleAvatar(
-                          foregroundImage:
+                itemBuilder: (context, index) => ListTile(
+                    title: Text(data[index]),
+                    leading: const CircleAvatar(
+                      foregroundImage:
                           AssetImage('assets/images/flutter_logo.png'),
-                        ),
-                        onTap: () {
-                          log("onTap");
-                        }),
+                    ),
+                    onTap: () {
+                      log("onTap");
+                    }),
               );
             }),
       ),
@@ -93,14 +91,14 @@ class StringConverter extends Converter<String, String> {
 
   @override
   String convert(String input) {
-    log("${Isolate.current.debugName}> convert");
+    log("${getIsolateName()}> convert");
     // unreachable,
     return input;
   }
 
   @override
   Sink<String> startChunkedConversion(Sink<String> sink) {
-    log("${Isolate.current.debugName}> startChunkedConversion");
+    log("${getIsolateName()}> startChunkedConversion");
     return StringSink(sink);
   }
 }
@@ -112,7 +110,7 @@ class StringSink extends Sink<String> {
 
   @override
   void add(String data) {
-    log("${Isolate.current.debugName}> add: ${data.length}");
+    log("${getIsolateName()}> add: ${data.length}");
     const max = 1000;
     for (int i = 0; i < data.length; i += max) {
       sink.add(data.substring(i, math.min(i + max, data.length)));
@@ -121,7 +119,7 @@ class StringSink extends Sink<String> {
 
   @override
   void close() {
-    log("${Isolate.current.debugName}> close");
+    log("${getIsolateName()}> close");
     sink.close();
   }
 }
