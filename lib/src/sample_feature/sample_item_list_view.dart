@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:demo/src/sample_feature/file_picker.dart';
+import 'package:demo/src/sample_feature/file_picker_item_details_view.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
-import '../settings/settings_view.dart';
 import 'sample_item.dart';
 import 'sample_item_details_view.dart';
 
@@ -42,12 +44,16 @@ class SampleItemListView extends StatelessWidget {
         title: Text(absolute(currentDirectory.path)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Navigate to the settings page. If the user leaves and returns
-              // to the app after it has been killed while running in the
-              // background, the navigation stack is restored.
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
+            icon: const Icon(Icons.select_all),
+            onPressed: () async {
+              var file = await pickFile();
+              if (file != null) {
+                // ignore: use_build_context_synchronously
+                if (!context.mounted) return;
+                Navigator.pushNamed(
+                    context, FilePickerItemDetailsView.routeName,
+                    arguments: file);
+              }
             },
           ),
         ],

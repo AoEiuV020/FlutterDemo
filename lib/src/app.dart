@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:demo/src/sample_feature/file_picker_item_details_view.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -19,7 +22,8 @@ class MyApp extends StatelessWidget {
   final SettingsController settingsController;
 
   String getDefaultPath() {
-    if (Platform.isAndroid) {
+    if (kIsWeb) {
+    } else if (Platform.isAndroid) {
       return "/sdcard";
     }
     return ".";
@@ -78,8 +82,11 @@ class MyApp extends StatelessWidget {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
                     return SettingsView(controller: settingsController);
+                  case FilePickerItemDetailsView.routeName:
+                    return FilePickerItemDetailsView(routeSettings.arguments as PlatformFile);
                   case SampleItemDetailsView.routeName:
-                    return SampleItemDetailsView(File(routeSettings.arguments as String));
+                    return SampleItemDetailsView(
+                        File(routeSettings.arguments as String));
                   case SampleItemListView.routeName:
                   default:
                     var path =
