@@ -71,6 +71,15 @@ jobs:
           then
               echo SEND_TELEGRAM="true" >> .custom_env
           fi
+          if test -n "${{ secrets.KEY_PROPERTIES }}"
+          then
+            echo "${{ secrets.KEY_PROPERTIES }}" > signing.properties
+            if test -n "${{ secrets.SIGNING_KEY }}"
+            then
+                echo ANDROID_SIGN="true" >> .custom_env
+            fi
+            cat signing.properties >> .custom_env
+          fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
       - name: upload .custom_env
