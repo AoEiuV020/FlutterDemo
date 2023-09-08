@@ -25,8 +25,7 @@ class FilePickerItemDetailsView extends StatelessWidget {
     List<String> items = [];
     return flattenStreams(currentFile.readStream!.asyncMap((event) async {
       log("${getIsolateName()}> asyncMap dataToString: ${event.length}");
-      var str = await compute(dataToString, event);
-      return str;
+      return Stream.fromIterable(await compute(dataToString, event));
     })).map((event) {
       items.add(event);
       log("${getIsolateName()}> map add items: ${items.length}");
@@ -87,13 +86,14 @@ class StringConverter extends Converter<String, String> {
   }
 }
 
-Stream<String> dataToString(List<int> data) {
+Future<List<String>> dataToString(List<int> data) async {
   log("${getIsolateName()}> dataToString, data.length=${data.length}");
   return Stream.fromIterable([String.fromCharCodes(data)])
-      .transform(const StringConverter());
+      .transform(const StringConverter())
+      .toList();
 }
 
-class StringSink extends Sink<String> {
+class StringSink implements Sink<String> {
   StringSink(this.sink);
 
   final Sink<String> sink;

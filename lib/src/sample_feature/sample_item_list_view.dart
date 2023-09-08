@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:demo/src/sample_feature/file_picker.dart';
 import 'package:demo/src/sample_feature/file_picker_item_details_view.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
