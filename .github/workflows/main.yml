@@ -1,6 +1,6 @@
 name: CI
 env:
-    TZ: Asia/Shanghai
+  TZ: Asia/Shanghai
 on:
   push:
     paths-ignore:
@@ -18,8 +18,8 @@ jobs:
     name: build env
     runs-on: ubuntu-latest
     steps:
-    - name: init custom env
-      run: |
+      - name: init custom env
+        run: |
           set -a
           BUILD_NAME="${GITHUB_REPOSITORY#*/}"
           if [[ ${GITHUB_REF} == refs/tags* ]]
@@ -71,22 +71,31 @@ jobs:
           then
               echo SEND_TELEGRAM="true" >> .custom_env
           fi
+          if test -n "${{ secrets.KEY_PROPERTIES }}"
+          then
+            echo "${{ secrets.KEY_PROPERTIES }}" > signing.properties
+            if test -n "${{ secrets.SIGNING_KEY }}"
+            then
+                echo ANDROID_SIGN="true" >> .custom_env
+            fi
+            cat signing.properties >> .custom_env
+          fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
-    - name: upload .custom_env
-      uses: actions/upload-artifact@master
-      with:
+      - name: upload .custom_env
+        uses: actions/upload-artifact@master
+        with:
           name: custom_env
           path: ./.custom_env
-    - name: clean custom env
-      run: rm .custom_env
+      - name: clean custom env
+        run: rm .custom_env
   build_app:
-    needs: [build_env]
+    needs: [ build_env ]
     name: Build Flutter (${{ matrix.config }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        name: [android, web, linux, windows, ios, macos]
+        name: [ android, web, linux, windows, ios, macos ]
         include:
           - name: android
             config: apk
@@ -221,48 +230,48 @@ jobs:
           force_orphan: true
           publish_dir: ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }}
   release_create:
-    needs: [build_app]
+    needs: [ build_app ]
     name: create release
     runs-on: ubuntu-latest
     steps:
-    - name: download custom env
-      uses: actions/download-artifact@v2
-      with:
+      - name: download custom env
+        uses: actions/download-artifact@v2
+        with:
           name: custom_env
-    - name: apply custom env
-      run: |
+      - name: apply custom env
+        run: |
           cat .custom_env >> $GITHUB_ENV
           rm .custom_env
-    - name: create release
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.BUILD_VERSION }}
-        release_name: ${{ env.BUILD_VERSION }}
-        body: ${{ env.RELEASE_BODY }}
-        draft: true
-        prerelease: ${{ env.PRE_RELEASE == 'true' }}
-    - name: save release env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      run: |
-        echo RELEASE_UPLAOD_URL="${{ steps.create_release.outputs.upload_url }}" >> .release_env
-        echo RELEASE_UPLAOD_ID="${{ steps.create_release.outputs.id }}" >> .release_env
-    - name: upload .release_env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: actions/upload-artifact@master
-      with:
-        name: release_env
-        path: ./.release_env
+      - name: create release
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.BUILD_VERSION }}
+          release_name: ${{ env.BUILD_VERSION }}
+          body: ${{ env.RELEASE_BODY }}
+          draft: true
+          prerelease: ${{ env.PRE_RELEASE == 'true' }}
+      - name: save release env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        run: |
+          echo RELEASE_UPLAOD_URL="${{ steps.create_release.outputs.upload_url }}" >> .release_env
+          echo RELEASE_UPLAOD_ID="${{ steps.create_release.outputs.id }}" >> .release_env
+      - name: upload .release_env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: actions/upload-artifact@master
+        with:
+          name: release_env
+          path: ./.release_env
   release_upload:
-    needs: [release_create]
+    needs: [ release_create ]
     name: upload release file
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        name: [android, web, linux, windows, ios, macos]
+        name: [ android, web, linux, windows, ios, macos ]
         include:
           - name: android
             FILE_TYPE: apk
@@ -279,66 +288,66 @@ jobs:
       # Disable fail-fast; we want results from all OSes even if one fails.
       fail-fast: false
     steps:
-    - name: download custom env
-      uses: actions/download-artifact@v2
-      with:
+      - name: download custom env
+        uses: actions/download-artifact@v2
+        with:
           name: custom_env
-    - name: apply custom env
-      run: |
-        cat .custom_env >> $GITHUB_ENV
-        rm .custom_env
-    - name: download release env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: actions/download-artifact@v2
-      with:
+      - name: apply custom env
+        run: |
+          cat .custom_env >> $GITHUB_ENV
+          rm .custom_env
+      - name: download release env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: actions/download-artifact@v2
+        with:
           name: release_env
-    - name: apply release env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      run: |
-        cat .release_env >> $GITHUB_ENV
-        rm .release_env
-    - name: download (${{ matrix.name }})
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: actions/download-artifact@v2
-      with:
+      - name: apply release env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        run: |
+          cat .release_env >> $GITHUB_ENV
+          rm .release_env
+      - name: download (${{ matrix.name }})
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: actions/download-artifact@v2
+        with:
           name: ${{ matrix.name }}-build
-    - name: Upload Release Asset (${{ matrix.name }})
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ env.RELEASE_UPLAOD_URL }}
-        asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-        asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-        asset_content_type: application/zip
+      - name: Upload Release Asset (${{ matrix.name }})
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLAOD_URL }}
+          asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+          asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+          asset_content_type: application/zip
   release_publish:
-    needs: [release_upload]
+    needs: [ release_upload ]
     name: publish release
     runs-on: ubuntu-latest
     steps:
-    - name: download custom env
-      uses: actions/download-artifact@v2
-      with:
-        name: custom_env
-    - name: apply custom env
-      run: |
-        cat .custom_env >> $GITHUB_ENV
-        rm .custom_env
-    - name: download release env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: actions/download-artifact@v2
-      with:
-        name: release_env
-    - name: apply release env
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      run: |
-        cat .release_env >> $GITHUB_ENV
-        rm .release_env
-    - name: publish release
-      if: ${{ env.CREATE_RELEASE == 'true' }}
-      uses: eregon/publish-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        release_id: ${{ env.RELEASE_UPLAOD_ID }}
+      - name: download custom env
+        uses: actions/download-artifact@v2
+        with:
+          name: custom_env
+      - name: apply custom env
+        run: |
+          cat .custom_env >> $GITHUB_ENV
+          rm .custom_env
+      - name: download release env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: release_env
+      - name: apply release env
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        run: |
+          cat .release_env >> $GITHUB_ENV
+          rm .release_env
+      - name: publish release
+        if: ${{ env.CREATE_RELEASE == 'true' }}
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ env.RELEASE_UPLAOD_ID }}
