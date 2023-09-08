@@ -1,28 +1,41 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:isolate';
 import 'dart:math' as math;
-
-import 'package:isolate/isolate.dart';
 
 import 'debug.dart';
 
 class AsyncDecoder {
-  late Future<LoadBalancer> loadBalancer =
-      LoadBalancer.create(1, IsolateRunner.spawn);
-
   Stream<String> decode(Stream<List<int>> data) async* {
-    final lb = await loadBalancer;
-    await for (var block in data) {
-      yield* Stream.fromIterable(await lb.run(_dataToString, block));
+    var mainReceive = ReceivePort();
+    await Isolate.spawn((SendPort sendPort) {
+      final receivePort = ReceivePort();
+      sendPort.send(receivePort.sendPort);
+      final streamController = StreamController<List<int>>();
+      streamController.stream
+          .map((event) => String.fromCharCodes(event))
+          .transform(const StringConverter())
+          .listen((event) {
+        sendPort.send(event);
+      });
+      receivePort.listen((event) {
+        streamController.sink.add(event);
+      }, onDone: () {
+        streamController.close();
+      });
+    }, mainReceive.sendPort);
+
+    await for (var message in mainReceive) {
+      if (message is SendPort) {
+        data.listen((event) {
+          message.send(event);
+        });
+        continue;
+      }
+      yield message as String;
     }
   }
-}
-
-Future<List<String>> _dataToString(List<int> data) async {
-  log("${getIsolateName()}> dataToString, data.length=${data.length}");
-  return Stream.fromIterable([String.fromCharCodes(data)])
-      .transform(const StringConverter())
-      .toList();
 }
 
 class StringConverter extends Converter<String, String> {
