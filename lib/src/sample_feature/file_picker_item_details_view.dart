@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:developer';
-import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -58,50 +56,5 @@ class FilePickerItemDetailsView extends StatelessWidget {
             }),
       ),
     );
-  }
-}
-
-class StringConverter extends Converter<String, String> {
-  const StringConverter();
-
-  @override
-  String convert(String input) {
-    log("${getIsolateName()}> convert");
-    // unreachable,
-    return input;
-  }
-
-  @override
-  Sink<String> startChunkedConversion(Sink<String> sink) {
-    log("${getIsolateName()}> startChunkedConversion");
-    return StringSink(sink);
-  }
-}
-
-Future<List<String>> dataToString(List<int> data) async {
-  log("${getIsolateName()}> dataToString, data.length=${data.length}");
-  return Stream.fromIterable([String.fromCharCodes(data)])
-      .transform(const StringConverter())
-      .toList();
-}
-
-class StringSink implements Sink<String> {
-  StringSink(this.sink);
-
-  final Sink<String> sink;
-
-  @override
-  void add(String data) {
-    log("${getIsolateName()}> add: ${data.length}");
-    const max = 1000;
-    for (int i = 0; i < data.length; i += max) {
-      sink.add(data.substring(i, math.min(i + max, data.length)));
-    }
-  }
-
-  @override
-  void close() {
-    log("${getIsolateName()}> close");
-    sink.close();
   }
 }

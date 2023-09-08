@@ -33,13 +33,6 @@ class SampleItemDetailsView extends StatelessWidget {
     }
   }
 
-  Future<List<String>> dataToString(List<int> data) async {
-    log("${getIsolateName()}> dataToString, data.length=${data.length}");
-    return Stream.fromIterable([String.fromCharCodes(data)])
-        .transform(const StringConverter())
-        .toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

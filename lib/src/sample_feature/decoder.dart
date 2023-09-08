@@ -1,40 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:isolate';
 import 'dart:math' as math;
+
+import 'package:demo/src/sample_feature/isolate_transform.dart';
 
 import 'debug.dart';
 
 class AsyncDecoder {
-  Stream<String> decode(Stream<List<int>> data) async* {
-    var mainReceive = ReceivePort();
-    await Isolate.spawn((SendPort sendPort) {
-      final receivePort = ReceivePort();
-      sendPort.send(receivePort.sendPort);
-      final streamController = StreamController<List<int>>();
-      streamController.stream
-          .transform(const Utf8Decoder(allowMalformed: true))
-          .transform(const StringConverter())
-          .listen((event) {
-        sendPort.send(event);
-      });
-      receivePort.listen((event) {
-        streamController.sink.add(event);
-      }, onDone: () {
-        streamController.close();
-      });
-    }, mainReceive.sendPort);
-
-    await for (var message in mainReceive) {
-      if (message is SendPort) {
-        data.listen((event) {
-          message.send(event);
-        });
-        continue;
-      }
-      yield message as String;
-    }
+  Stream<String> decode(Stream<List<int>> data) {
+    return IsolateTransform<List<int>, String>().transform(
+        data,
+        (e) => e
+            .transform(const Utf8Decoder(allowMalformed: true))
+            .transform(const StringConverter()));
   }
 }
 
