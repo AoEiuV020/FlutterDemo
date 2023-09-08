@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:math' as math;
 
-import 'package:demo/src/sample_feature/debug.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'debug.dart';
+import 'decoder.dart';
 
 class FilePickerItemDetailsView extends StatelessWidget {
   const FilePickerItemDetailsView(this.currentFile, {super.key});
@@ -14,23 +15,14 @@ class FilePickerItemDetailsView extends StatelessWidget {
 
   final PlatformFile currentFile;
 
-  Stream<T> flattenStreams<T>(Stream<Stream<T>> source) async* {
-    await for (var stream in source) {
-      yield* stream;
-    }
-  }
-
-  Stream<List<String>> getStream() {
+  Stream<List<String>> getStream() async* {
     log("${getIsolateName()}> getStream");
+    final decoder = AsyncDecoder();
     List<String> items = [];
-    return flattenStreams(currentFile.readStream!.asyncMap((event) async {
-      log("${getIsolateName()}> asyncMap dataToString: ${event.length}");
-      return Stream.fromIterable(await compute(dataToString, event));
-    })).map((event) {
-      items.add(event);
-      log("${getIsolateName()}> map add items: ${items.length}");
-      return items;
-    });
+    await for (String str in decoder.decode(currentFile.readStream!)) {
+      items.add(str);
+      yield items;
+    }
   }
 
   @override

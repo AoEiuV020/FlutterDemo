@@ -1,12 +1,10 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'debug.dart';
+import 'decoder.dart';
 
 /// Displays detailed information about a SampleItem.
 class SampleItemDetailsView extends StatelessWidget {
@@ -15,12 +13,6 @@ class SampleItemDetailsView extends StatelessWidget {
   static const routeName = '/sample_item';
 
   final File currentFile;
-
-  Stream<T> flattenStreams<T>(Stream<Stream<T>> source) async* {
-    await for (var stream in source) {
-      yield* stream;
-    }
-  }
 
   Future<String> getFuture() async {
     log("${getIsolateName()}> getFuture");
@@ -31,16 +23,14 @@ class SampleItemDetailsView extends StatelessWidget {
     }
   }
 
-  Stream<List<String>> getStream() {
+  Stream<List<String>> getStream() async* {
     log("${getIsolateName()}> getStream");
+    final decoder = AsyncDecoder();
     List<String> items = [];
-    return flattenStreams(currentFile.openRead().asyncMap((event) async {
-      log("${getIsolateName()}> asyncMap dataToString: ${event.length}");
-      return Stream.fromIterable(await compute(dataToString, event));
-    })).map((event) {
-      items.add(event);
-      return items;
-    });
+    await for (String str in decoder.decode(currentFile.openRead())) {
+      items.add(str);
+      yield items;
+    }
   }
 
   Future<List<String>> dataToString(List<int> data) async {
@@ -83,43 +73,5 @@ class SampleItemDetailsView extends StatelessWidget {
             }),
       ),
     );
-  }
-}
-
-class StringConverter extends Converter<String, String> {
-  const StringConverter();
-
-  @override
-  String convert(String input) {
-    log("${getIsolateName()}> convert");
-    // unreachable,
-    return input;
-  }
-
-  @override
-  Sink<String> startChunkedConversion(Sink<String> sink) {
-    log("${getIsolateName()}> startChunkedConversion");
-    return StringSink(sink);
-  }
-}
-
-class StringSink implements Sink<String> {
-  StringSink(this.sink);
-
-  final Sink<String> sink;
-
-  @override
-  void add(String data) {
-    log("${getIsolateName()}> add: ${data.length}");
-    const max = 1000;
-    for (int i = 0; i < data.length; i += max) {
-      sink.add(data.substring(i, math.min(i + max, data.length)));
-    }
-  }
-
-  @override
-  void close() {
-    log("${getIsolateName()}> close");
-    sink.close();
   }
 }
