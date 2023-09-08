@@ -14,7 +14,7 @@ class AsyncDecoder {
       sendPort.send(receivePort.sendPort);
       final streamController = StreamController<List<int>>();
       streamController.stream
-          .map((event) => String.fromCharCodes(event))
+          .transform(const Utf8Decoder(allowMalformed: true))
           .transform(const StringConverter())
           .listen((event) {
         sendPort.send(event);
