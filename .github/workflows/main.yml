@@ -195,6 +195,11 @@ jobs:
           path: ${{ matrix.RELEASE_PATH }}
           directory: ${{ matrix.RELEASE_DIRECTORY }}
           filename: ${{ github.workspace }}/build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+      - name: set python version
+        if: "${{ matrix.FILE_TYPE == 'dmg' }}"
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' 
       - name: dmg
         if: "${{ matrix.FILE_TYPE == 'dmg' }}"
         run: |
