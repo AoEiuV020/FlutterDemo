@@ -123,7 +123,7 @@ jobs:
             os: windows-latest
             FILE_TYPE: zip
             RELEASE_PATH: .
-            RELEASE_DIRECTORY: build/windows/runner/Release
+            RELEASE_DIRECTORY: build/windows/x64/runner/Release
           - name: ios
             config: ios
             os: macos-latest
@@ -169,7 +169,8 @@ jobs:
       - name: enable config (${{ matrix.config }})
         if: "${{ matrix.ENABLE_CONFIG != '' }}"
         run: flutter config --enable-${{ matrix.ENABLE_CONFIG }}
-      - run: |
+      - name: build
+        run: |
           flutter pub get
           flutter build ${{ matrix.config }} ${{ matrix.BUILD_ARGS }}
       - name: post
