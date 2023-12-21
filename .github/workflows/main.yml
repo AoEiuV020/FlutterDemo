@@ -83,7 +83,7 @@ jobs:
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
       - name: upload .custom_env
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: custom_env
           path: ./.custom_env
@@ -147,7 +147,7 @@ jobs:
       fail-fast: false
     steps:
       - name: download custom env
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: custom_env
       - name: apply custom env
@@ -224,7 +224,7 @@ jobs:
         if: "${{ matrix.FILE_TYPE == 'apk' }}"
         run: cp ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }} build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
       - name: Archive Production Artifact
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-build
           path: build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
@@ -241,7 +241,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: download custom env
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: custom_env
       - name: apply custom env
@@ -267,7 +267,7 @@ jobs:
           echo RELEASE_UPLAOD_ID="${{ steps.create_release.outputs.id }}" >> .release_env
       - name: upload .release_env
         if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: release_env
           path: ./.release_env
@@ -295,7 +295,7 @@ jobs:
       fail-fast: false
     steps:
       - name: download custom env
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: custom_env
       - name: apply custom env
@@ -304,7 +304,7 @@ jobs:
           rm .custom_env
       - name: download release env
         if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: release_env
       - name: apply release env
@@ -314,7 +314,7 @@ jobs:
           rm .release_env
       - name: download (${{ matrix.name }})
         if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.name }}-build
       - name: Upload Release Asset (${{ matrix.name }})
@@ -333,7 +333,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: download custom env
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: custom_env
       - name: apply custom env
@@ -342,7 +342,7 @@ jobs:
           rm .custom_env
       - name: download release env
         if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: release_env
       - name: apply release env
