@@ -42,7 +42,6 @@ jobs:
               then
                   RELEASE_BODY='### ${{ github.event.head_commit.message }}'
                   TG_CHANGELOG="$(echo "$RELEASE_BODY"|sed -n "s/### \(.*\)/\1/p" |sed -n '{;=;p}' | sed "N;s/\n/. /g")"
-              else
               fi
           elif [[ ${GITHUB_REF} == refs/pull* ]]
           then
