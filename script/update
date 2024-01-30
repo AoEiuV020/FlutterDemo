@@ -9,12 +9,19 @@ echo update $ROOT
 mv $ROOT $ROOT_TMP
 $ROOT_TMP/script/create $ROOT
 cd $ROOT_TMP
-for i in .git .github LICENSE script README.md */README.md
+for i in .git .github LICENSE script README.md */README.md android/gradle/signing.gradle
 do
   mv $ROOT_TMP/$i $ROOT/$(dirname $i)
 done
 cd $ROOT
+# 改主页标题，
 sed -i 's/Sample Items/Sample Items AoEiuV020/' lib/src/sample_feature/sample_item_list_view.dart
+# 改app版本号为flutter自身的版本号，
 sed -i "s/^version: 1\.0\.0[+]1/version: ${flutter_version}+1/" pubspec.yaml
+# 安卓签名配置，
+cat <<EOF >> android/app/build.gradle
+apply from: rootProject.file('gradle/signing.gradle')
+EOF
+
 git status
 rm -rf $ROOT_TMP
