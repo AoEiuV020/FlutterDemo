@@ -13,6 +13,12 @@ on:
       - '.github/workflows/*'
       - '!.github/workflows/main.yml'
   workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 jobs:
   build_env:
     name: build env
@@ -34,6 +40,10 @@ jobs:
               num=${GITHUB_REF#refs/pull/}
               num=${num%/merge}
               BUILD_VERSION=pr-${num}-"$(date +'%Y%m%d%H%M%S')"
+          elif [[ ${GITHUB_EVENT_NAME} == workflow_dispatch ]]
+          then
+              CREATE_RELEASE="false"
+              BUILD_VERSION="$(date +'%Y%m%d%H%M%S')"
           elif [[ ${GITHUB_REF} == refs/heads* ]]
           then
               CREATE_RELEASE="false"
@@ -63,22 +73,10 @@ jobs:
                   echo 'EOF' >> .custom_env
               fi
           fi
-          if [[ "$CREATE_RELEASE" == "true" ]]
-          then
-              echo DEPLOY_WEB="true" >> .custom_env
-          fi
+          echo DEPLOY_WEB="true" >> .custom_env
           if [[ "$CREATE_RELEASE" == "true" && -n "${{ secrets.TELEGRAM_TO }}" && -n "${{ secrets.TELEGRAM_TOKEN }}" ]]
           then
               echo SEND_TELEGRAM="true" >> .custom_env
-          fi
-          if test -n "${{ secrets.KEY_PROPERTIES }}"
-          then
-            echo "${{ secrets.KEY_PROPERTIES }}" > signing.properties
-            if test -n "${{ secrets.SIGNING_KEY }}"
-            then
-                echo ANDROID_SIGN="true" >> .custom_env
-            fi
-            cat signing.properties >> .custom_env
           fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
@@ -87,6 +85,11 @@ jobs:
         with:
           name: custom_env
           path: ./.custom_env
+      - name: Setup tmate session
+        env:   
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
       - name: clean custom env
         run: rm .custom_env
   build_app:
@@ -95,7 +98,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        name: [ android, web, linux, windows, ios, macos ]
+        name: [ android, android-aab, web, linux, windows, ios, macos ]
         include:
           - name: android
             config: apk
@@ -104,6 +107,13 @@ jobs:
             BUILD_ARGS: "--target-platform android-arm64"
             RELEASE_PATH: '*.apk'
             RELEASE_DIRECTORY: build/app/outputs/apk/release
+          - name: android-aab
+            config: appbundle
+            os: ubuntu-latest
+            FILE_TYPE: aab
+            BUILD_ARGS: ""
+            RELEASE_PATH: '*.aab'
+            RELEASE_DIRECTORY: build/app/outputs/bundle/release
           - name: web
             config: web
             os: ubuntu-latest
@@ -169,6 +179,17 @@ jobs:
       - name: enable config (${{ matrix.config }})
         if: "${{ matrix.ENABLE_CONFIG != '' }}"
         run: flutter config --enable-${{ matrix.ENABLE_CONFIG }}
+      - name: prepare android signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        if: "${{ ( matrix.FILE_TYPE == 'apk' || matrix.FILE_TYPE == 'aab' ) && env.SIGNING_KEY != '' }}"
+        run: |
+          cd android
+          echo "${{ secrets.SIGNING_KEY }}" |base64 -d > ci.jks
+          echo storeFile=ci.jks > key.properties
+          echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> key.properties
+          echo keyAlias=${{ secrets.ALIAS }} >> key.properties
+          echo keyPassword=${{ secrets.KEY_PASSWORD }} >> key.properties
       - name: build
         run: |
           flutter pub get
@@ -211,17 +232,8 @@ jobs:
           sed "s/###PATH###/$(echo $appPath | sed 's_/_\\/_g')/g" |
           tee ./appdmg.json
           appdmg ./appdmg.json build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-      - uses: AoEiuV020/sign-android-release@v2
-        name: Sign release APK
-        if: ${{ matrix.FILE_TYPE == 'apk' && env.ANDROID_SIGN == 'true' }}
-        with:
-          releaseDirectory: ${{ matrix.RELEASE_DIRECTORY }}
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ env.keyAlias }}
-          keyStorePassword: ${{ env.storePassword }}
-          keyPassword: ${{ env.keyPassword }}
       - name: copy file
-        if: "${{ matrix.FILE_TYPE == 'apk' }}"
+        if: "${{ matrix.FILE_TYPE == 'apk' || matrix.FILE_TYPE == 'aab' }}"
         run: cp ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }} build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
       - name: Archive Production Artifact
         uses: actions/upload-artifact@v4
@@ -277,10 +289,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        name: [ android, web, linux, windows, ios, macos ]
+        name: [ android, android-aab, web, linux, windows, ios, macos ]
         include:
           - name: android
             FILE_TYPE: apk
+          - name: android-aab
+            FILE_TYPE: aab
           - name: web
             FILE_TYPE: zip
           - name: linux
