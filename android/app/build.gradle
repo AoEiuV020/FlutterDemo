@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.aoeiuv020.flutter.demo"
-    compileSdkVersion flutter.compileSdkVersion
+    compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {
