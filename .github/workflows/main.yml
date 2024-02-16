@@ -136,7 +136,9 @@ jobs:
             ENABLE_CONFIG: linux-desktop
             RELEASE_PATH: .
             RELEASE_DIRECTORY: build/linux/x64/release/bundle
-            PRE_COMMAND: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+            PRE_COMMAND: |
+              sudo apt-get -y update
+              sudo apt-get -y install clang cmake git ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
           - name: windows
             config: windows
             os: windows-latest
