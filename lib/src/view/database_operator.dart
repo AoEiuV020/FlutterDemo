@@ -14,6 +14,21 @@ class DatabaseOperator extends StatefulWidget {
 
 class _DatabaseOperatorState extends State<DatabaseOperator> {
   List<TodoItem> items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    list();
+  }
+
+  void list() async {
+    final database = widget.database;
+    final list = await database.select(database.todoItems).get();
+    setState(() {
+      items.addAll(list);
+    });
+  }
+
   void add() async {
     final database = widget.database;
     final count = items.isEmpty ? 1 : items.length;
@@ -51,6 +66,11 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            const CircularProgressIndicator(),
+            ElevatedButton(
+              onPressed: list,
+              child: const Text('刷新'),
+            ),
             ElevatedButton(
               onPressed: add,
               child: const Text('添加'),
