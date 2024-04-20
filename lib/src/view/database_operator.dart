@@ -74,6 +74,12 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
   }
 
   @override
+  void dispose() {
+    widget.database.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
