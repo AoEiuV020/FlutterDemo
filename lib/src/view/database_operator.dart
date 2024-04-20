@@ -1,5 +1,4 @@
 import 'package:demo/src/db/database.dart';
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 import 'todo_item_line.dart';
@@ -41,19 +40,9 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
       final category = (item.category ?? 0) + i;
       final newItem =
           TodoItem(id: id, title: title, content: content, category: category);
-      await database.into(database.todoItems).insert(newItem,
-          onConflict: drift.DoUpdate(
-            (old) => TodoItemsCompanion.custom(
-              title: drift.Constant(title),
-              content: drift.Constant(content),
-              category: old.category + drift.Constant(i),
-            ),
-          ));
-      items[i] = item.copyWith(
-        title: title,
-        content: content,
-        category: drift.Value(category),
-      );
+      await database.itemUpdate(newItem, i);
+      items[i] =
+          TodoItem(id: id, title: title, content: content, category: category);
     }
     setState(() {});
   }
@@ -65,14 +54,9 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
       final title = 'title $i';
       final content = 'content $i';
       final category = i;
-      final id = await database
-          .into(database.todoItems)
-          .insert(TodoItemsCompanion.insert(
-            title: title,
-            content: content,
-            category: drift.Value(category),
-          ));
-      final item = TodoItem(id: id, title: title, content: content);
+      final id = await database.itemAdd(title, content, category);
+      final item =
+          TodoItem(id: id, title: title, content: content, category: category);
       setState(() {
         items.add(item);
       });
@@ -83,8 +67,7 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
     final database = widget.database;
     final count = items.isEmpty ? 0 : (items.length / 2).ceil();
     final set = items.sublist(0, count).map((e) => e.id).toSet();
-    await (database.delete(database.todoItems)..where((t) => t.id.isIn(set)))
-        .go();
+    await database.itemDelete(set);
     setState(() {
       items.removeRange(0, count);
     });

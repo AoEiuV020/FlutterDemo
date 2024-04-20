@@ -22,6 +22,26 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  Future<int> itemUpdate(TodoItem newItem, int add) =>
+      into(todoItems).insert(newItem,
+          onConflict: DoUpdate(
+            (old) => TodoItemsCompanion.custom(
+              title: Constant(newItem.title),
+              content: Constant(newItem.content),
+              category: old.category + Constant(add),
+            ),
+          ));
+
+  Future<int> itemAdd(String title, String content, int category) =>
+      into(todoItems).insert(TodoItemsCompanion.insert(
+        title: title,
+        content: content,
+        category: Value(category),
+      ));
+
+  Future<int> itemDelete(Set<int> idSet) =>
+      (delete(todoItems)..where((t) => t.id.isIn(idSet))).go();
 }
 
 LazyDatabase _openConnection() {
