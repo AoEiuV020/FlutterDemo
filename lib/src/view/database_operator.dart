@@ -1,4 +1,5 @@
 import 'package:demo/src/db/database.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 import 'todo_item_line.dart';
@@ -27,6 +28,27 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
     setState(() {
       items.addAll(list);
     });
+  }
+
+  void update() async {
+    final database = widget.database;
+    for (var i = 0; i < items.length; i++) {
+      final item = items[i];
+      final id = item.id;
+      final title = 'reset $i';
+      final content = 'content $i';
+      await (database.update(database.todoItems)
+            ..where((tbl) => tbl.id.equals(id)))
+          .write(TodoItemsCompanion(
+        title: drift.Value(title),
+        content: drift.Value(content),
+      ));
+      items[i] = item.copyWith(
+        title: title,
+        content: content,
+      );
+    }
+    setState(() {});
   }
 
   void add() async {
@@ -70,6 +92,10 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
             ElevatedButton(
               onPressed: list,
               child: const Text('刷新'),
+            ),
+            ElevatedButton(
+              onPressed: update,
+              child: const Text('更新'),
             ),
             ElevatedButton(
               onPressed: add,
