@@ -10,7 +10,7 @@ class TodoItemLine extends StatelessWidget {
     return Column(
       children: [
         Text("${item.id}: ${item.title}"),
-        Text("content: ${item.content}"),
+        Text("${item.category} ${item.content}"),
       ],
     );
   }

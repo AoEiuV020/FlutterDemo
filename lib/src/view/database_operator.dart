@@ -26,6 +26,7 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
     final database = widget.database;
     final list = await database.select(database.todoItems).get();
     setState(() {
+      items.clear();
       items.addAll(list);
     });
   }
@@ -36,16 +37,22 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
       final item = items[i];
       final id = item.id;
       final title = 'reset $i';
-      final content = 'content $i';
-      await (database.update(database.todoItems)
-            ..where((tbl) => tbl.id.equals(id)))
-          .write(TodoItemsCompanion(
-        title: drift.Value(title),
-        content: drift.Value(content),
-      ));
+      final content = 'old.category: ${item.category}';
+      final category = (item.category ?? 0) + i;
+      final newItem =
+          TodoItem(id: id, title: title, content: content, category: category);
+      await database.into(database.todoItems).insert(newItem,
+          onConflict: drift.DoUpdate(
+            (old) => TodoItemsCompanion.custom(
+              title: drift.Constant(title),
+              content: drift.Constant(content),
+              category: old.category + drift.Constant(i),
+            ),
+          ));
       items[i] = item.copyWith(
         title: title,
         content: content,
+        category: drift.Value(category),
       );
     }
     setState(() {});
@@ -57,11 +64,13 @@ class _DatabaseOperatorState extends State<DatabaseOperator> {
     for (var i = 0; i < count; i++) {
       final title = 'title $i';
       final content = 'content $i';
+      final category = i;
       final id = await database
           .into(database.todoItems)
           .insert(TodoItemsCompanion.insert(
             title: title,
             content: content,
+            category: drift.Value(category),
           ));
       final item = TodoItem(id: id, title: title, content: content);
       setState(() {
