@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -64,6 +65,7 @@ LazyDatabase _openConnection() {
     // Explicitly tell it about the correct temporary directory.
     sqlite3.tempDirectory = cachebase;
 
+    Logger().d(file.path);
     return NativeDatabase.createInBackground(file);
   });
 }
