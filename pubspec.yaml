@@ -4,10 +4,10 @@ description: "A new Flutter project."
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-version: 3.24.0+1
+version: 3.24.1+1
 
 environment:
-  sdk: ^3.5.0
+  sdk: ^3.5.1
 
 dependencies:
   flutter:
