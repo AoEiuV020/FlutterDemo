@@ -92,6 +92,7 @@ jobs:
       - name: upload .custom_env
         uses: actions/upload-artifact@v4
         with:
+          include-hidden-files: true
           name: custom_env
           path: ./.custom_env
       - name: Setup tmate session
