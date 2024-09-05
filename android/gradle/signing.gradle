@@ -51,6 +51,7 @@ android {
             }
         }
     }
+    buildFeatures.buildConfig true
     if (sha1 == null) {
         defaultConfig.buildConfigField('String', "SIGNATURE", 'null')
     } else {
