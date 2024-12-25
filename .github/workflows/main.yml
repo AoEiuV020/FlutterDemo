@@ -233,21 +233,23 @@ jobs:
           path: ${{ matrix.RELEASE_PATH }}
           directory: ${{ matrix.RELEASE_DIRECTORY }}
           filename: ${{ github.workspace }}/build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-      - name: set python version
-        if: "${{ matrix.FILE_TYPE == 'dmg' }}"
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11' 
       - name: dmg
         if: "${{ matrix.FILE_TYPE == 'dmg' }}"
         run: |
-          npm install -g appdmg
-          appPath=$(ls -d ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }})
-          echo '{"title":"###TITLE###","icon":"###PATH###/Contents/Resources/AppIcon.icns","contents":[{"x":448,"y":144,"type":"link","path":"/Applications"},{"x":192,"y":144,"type":"file","path":"###PATH###"}]}' |
-          sed "s/###TITLE###/${{ env.BUILD_NAME }}/g" |
-          sed "s/###PATH###/$(echo $appPath | sed 's_/_\\/_g')/g" |
-          tee ./appdmg.json
-          appdmg ./appdmg.json build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+          appPath=$(ls -d $PWD/${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }})
+          targetPath=$PWD/build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
+          cd build
+          # 创建临时目录
+          mkdir -p dist
+          # 复制 app 到临时目录
+          cp -r "$appPath" dist/
+          # 创建 Applications 软链接
+          ln -s /Applications dist/Applications
+          # 使用 hdiutil 创建 dmg
+          hdiutil create -volname "${{ env.BUILD_NAME }}" \
+            -srcfolder dist \
+            -format UDZO \
+            "$targetPath"
       - name: copy file
         if: "${{ matrix.FILE_TYPE == 'apk' || matrix.FILE_TYPE == 'aab' }}"
         run: cp ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }} build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
