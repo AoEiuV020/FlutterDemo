@@ -242,7 +242,7 @@ jobs:
           # 创建临时目录
           mkdir -p dist
           # 复制 app 到临时目录
-          cp -r "$appPath" dist/
+          cp -a "$appPath" dist/
           # 创建 Applications 软链接
           ln -s /Applications dist/Applications
           # 使用 hdiutil 创建 dmg
