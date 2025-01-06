@@ -128,6 +128,7 @@ jobs:
             config: web
             os: ubuntu-latest
             FILE_TYPE: zip
+            BUILD_ARGS: $WEB_BASE_HREF
             RELEASE_PATH: .
             RELEASE_DIRECTORY: build/web
           - name: linux
@@ -206,6 +207,15 @@ jobs:
           echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> key.properties
           echo keyAlias=${{ secrets.ALIAS }} >> key.properties
           echo keyPassword=${{ secrets.KEY_PASSWORD }} >> key.properties
+      - name: set web base-href
+        if: matrix.name == 'web'
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.CNAME }}" ]; then
+            echo "WEB_BASE_HREF=--base-href=/" >> $GITHUB_ENV
+          else
+            echo "WEB_BASE_HREF=--base-href=/${{ github.event.repository.name }}/" >> $GITHUB_ENV
+          fi
       - name: build
         run: |
           flutter pub get
