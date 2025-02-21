@@ -75,6 +75,7 @@ Future<void> main(List<String> args) async {
   final filesToMove = [
     '.git',
     '.github',
+    '.vscode',
     'LICENSE',
     'bin',
     'script',
