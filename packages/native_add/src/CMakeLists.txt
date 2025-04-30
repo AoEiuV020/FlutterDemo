@@ -1,31 +1,62 @@
-# Flutter工具要求开发者安装CMake 3.10或更高版本
-# 不要提高此版本要求，否则会导致插件在某些用户环境中编译失败
-# 解释：设置CMake最低版本要求，保持兼容性
 cmake_minimum_required(VERSION 3.10)
+project(native_add_internal VERSION 0.0.1 LANGUAGES C)
 
-# 定义项目名称、版本和使用的编程语言
-# 解释：创建native_add_library项目，使用C语言
-project(native_add_library VERSION 0.0.1 LANGUAGES C)
+set(TARGET_LIB_NAME "native_add")
+set(LIB_CACHE_DIR "${CMAKE_SOURCE_DIR}/lib_cache")
+file(MAKE_DIRECTORY ${LIB_CACHE_DIR})
+set(CACHED_LIB_PATH "${LIB_CACHE_DIR}/${TARGET_LIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-# 添加共享库
-# 解释：创建名为native_add的共享库，包含native_add.c源文件
-add_library(native_add SHARED
-  "native_add.c"
+# 始终定义目标（使用伪源文件）
+add_library(${TARGET_LIB_NAME} SHARED
+    "${CMAKE_CURRENT_SOURCE_DIR}/dummy.c"
 )
 
-# 设置目标属性
-# 解释：指定公共头文件和输出名称
-set_target_properties(native_add PROPERTIES
-  PUBLIC_HEADER native_add.h
-  OUTPUT_NAME "native_add"
-)
+if(EXISTS ${CACHED_LIB_PATH})
+    message(STATUS "Using cached library: ${CACHED_LIB_PATH}")
+    
+    # 1. 禁用实际编译
+    set_target_properties(${TARGET_LIB_NAME} PROPERTIES
+        EXCLUDE_FROM_ALL TRUE
+        LINKER_LANGUAGE C
+    )
+    
+    # 2. 添加自定义命令确保文件被复制到正确位置
+    add_custom_command(TARGET ${TARGET_LIB_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CACHED_LIB_PATH}
+            $<TARGET_FILE_DIR:${TARGET_LIB_NAME}>/
+        COMMENT "Deploying cached library to build directory"
+    )
+    
+    # 3. 确保安装阶段能找到库文件
+    install(FILES ${CACHED_LIB_PATH}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}"
+        CONFIGURATIONS Debug Release
+    )
+else()
+    message(STATUS "Building library from source...")
+    
+    # 正常编译设置
+    target_sources(${TARGET_LIB_NAME} PRIVATE
+        "native_add.c"
+    )
+    
+    set_target_properties(${TARGET_LIB_NAME} PROPERTIES
+        EXCLUDE_FROM_ALL FALSE
+        PUBLIC_HEADER native_add.h
+    )
 
-# 添加编译定义
-# 解释：为native_add目标添加DART_SHARED_LIB宏定义
-target_compile_definitions(native_add PUBLIC DART_SHARED_LIB)
+    if(WIN32)
+        target_compile_definitions(${TARGET_LIB_NAME} PRIVATE
+            "EXPORT=__declspec(dllexport)"
+        )
+    endif()
 
-if (ANDROID)
-  # 支持Android 15的16k页面大小
-  # 解释：为Android平台设置链接选项
-  target_link_options(native_add PRIVATE "-Wl,-z,max-page-size=16384")
+    # 编译后缓存
+    add_custom_command(TARGET ${TARGET_LIB_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:${TARGET_LIB_NAME}>
+            ${CACHED_LIB_PATH}
+        COMMENT "Caching library to ${CACHED_LIB_PATH}"
+    )
 endif()
