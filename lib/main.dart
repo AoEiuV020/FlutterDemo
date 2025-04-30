@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:native_add/native_add.dart' as native_add;
 
 void main() {
   runApp(const MyApp());
@@ -63,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      _counter = native_add.sum(_counter, 1);
     });
   }
 
