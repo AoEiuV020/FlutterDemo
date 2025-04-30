@@ -1,20 +1,20 @@
-# The Flutter tooling requires that developers have a version of Visual Studio
-# installed that includes CMake 3.14 or later. You should not increase this
-# version, as doing so will cause the plugin to fail to compile for some
-# customers of the plugin.
+# Flutter工具要求开发者安装包含CMake 3.14或更高版本的Visual Studio
+# 不要提高此版本要求，否则会导致插件在某些用户环境中编译失败
+# 解释：设置CMake最低版本要求，保持兼容性
 cmake_minimum_required(VERSION 3.14)
 
-# Project-level configuration.
+# 项目级配置
+# 解释：定义项目名称和使用的编程语言
 set(PROJECT_NAME "native_add")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-# Invoke the build for native code shared with the other target platforms.
-# This can be changed to accommodate different builds.
+# 调用与其他目标平台共享的本地代码构建
+# 解释：添加子目录构建共享代码，可根据不同构建需求修改
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../src" "${CMAKE_CURRENT_BINARY_DIR}/shared")
 
-# List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
+# 需要与插件一起打包的库的绝对路径列表
+# 此列表可能包含预构建库或由此构建文件触发的外部构建创建的库
+# 解释：定义要打包的库文件列表
 set(native_add_bundled_libraries
   # Defined in ../src/CMakeLists.txt.
   # This can be changed to accommodate different builds.
