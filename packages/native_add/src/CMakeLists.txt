@@ -65,11 +65,10 @@ else()
             COMMENT "保存Windows导入库: ${PREBUILD_IMPLIB}"
         )
     endif()
-endif()
 
-if(ANDROID)
-# Android平台特殊处理
-    if(ANDROID AND TARGET ${TARGET_NAME} AND NOT TARGET ${TARGET_NAME} IMPORTED)
+    if(ANDROID)
+        # Android平台特殊处理
         target_link_options(${TARGET_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
     endif()
+
 endif()
