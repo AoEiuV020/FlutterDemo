@@ -35,7 +35,6 @@ android {
     sourceSets {
         main {
             jniLibs.srcDirs = ["${project.projectDir}/../prebuild/Android"]
-            println("jniLibs.srcDirs = ${jniLibs.srcDirs}")
         }
     }
 
