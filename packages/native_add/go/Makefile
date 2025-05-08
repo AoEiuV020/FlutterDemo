@@ -68,26 +68,33 @@ ios-arm64:
 
 ios: ios-x86_64-sim ios-arm64-sim ios-arm64
 
-macos:
+macos-arm64:
 	CGO_ENABLED=1 \
 	GOOS=darwin \
 	GOARCH=arm64 \
 	SDK=macos \
-	go build -trimpath -buildmode=c-shared -o $(LIB_NAME)_arm64.dylib .
+	go build -trimpath -buildmode=c-archive -o $(PREBUILD_PATH)/macOS/arm64/$(LIB_NAME).a .
+	rm $(PREBUILD_PATH)/macOS/arm64/$(LIB_NAME).h
+
+macos-amd64:
 	CGO_ENABLED=1 \
 	GOOS=darwin \
 	GOARCH=amd64 \
 	SDK=macos \
-	go build -trimpath -buildmode=c-shared -o $(LIB_NAME)_amd64.dylib .
+	go build -trimpath -buildmode=c-archive -o $(PREBUILD_PATH)/macOS/x86_64/$(LIB_NAME).a .
+	rm $(PREBUILD_PATH)/macOS/x86_64/$(LIB_NAME).h
+
+macos-universal: macos-arm64 macos-amd64
+	mkdir -p $(PREBUILD_PATH)/macOS/universal/
 	lipo \
 		-create \
-		$(LIB_NAME)_arm64.dylib \
-		$(LIB_NAME)_amd64.dylib \
-		-output $(LIB_NAME).dylib
-	install_name_tool -id "@rpath/$(LIB_NAME).dylib" $(LIB_NAME).dylib
-	mv $(LIB_NAME).dylib ../macos/$(LIB_NAME).dylib
-	rm $(LIB_NAME)_*.h
-	rm $(LIB_NAME)_*.dylib
+		$(PREBUILD_PATH)/macOS/arm64/$(LIB_NAME).a \
+		$(PREBUILD_PATH)/macOS/x86_64/$(LIB_NAME).a \
+		-output $(PREBUILD_PATH)/macOS/universal/$(LIB_NAME).a
+	rm $(PREBUILD_PATH)/macOS/arm64/$(LIB_NAME).a
+	rm $(PREBUILD_PATH)/macOS/x86_64/$(LIB_NAME).a
+
+macos: macos-arm64 macos-amd64
 
 windows:
 	CGO_ENABLED=1 \

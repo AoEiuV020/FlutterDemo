@@ -27,9 +27,13 @@ A new Flutter FFI plugin project.
   # s.resource_bundles = {'native_add_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
 
   s.dependency 'FlutterMacOS'
-  s.vendored_libraries  = 'libnative_add.dylib'
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  s.pod_target_xcconfig = {
+    'DEFINES_MODULE' => 'YES',
+    # We use `-force_load` instead of `-l` since Xcode strips out unused symbols from static libraries.
+    'OTHER_LDFLAGS' => '-force_load ${PODS_TARGET_SRCROOT}/../prebuild/${PLATFORM_FAMILY_NAME}/${CURRENT_ARCH}/libnative_add.a',
+  }
   s.swift_version = '5.0'
 end
