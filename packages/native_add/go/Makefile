@@ -20,32 +20,6 @@ ios-arm64:
 	./build_ios.sh
 
 ios: ios-x86_64-sim ios-arm64-sim ios-arm64
-	lipo \
-    -create \
-    lib${LIB_NAME}_arm64_iphonesimulator.a \
-    lib${LIB_NAME}_amd64_iphonesimulator.a \
-    -output lib${LIB_NAME}_iphonesimulator.a
-	rm lib${LIB_NAME}_arm64_iphonesimulator.*
-	rm lib${LIB_NAME}_amd64_iphonesimulator.*
-
-	mkdir -p ios-arm64
-	mkdir -p ios-simulator
-	mv ./lib${LIB_NAME}_arm64_iphoneos.a ./ios-arm64/lib${LIB_NAME}.a
-	cp ./lib${LIB_NAME}_arm64_iphoneos.h ./ios-arm64/lib${LIB_NAME}.h
-	mv ./lib${LIB_NAME}_iphonesimulator.a ./ios-simulator/lib${LIB_NAME}.a
-	mv ./lib${LIB_NAME}_arm64_iphoneos.h ./ios-simulator/lib${LIB_NAME}.h
-
-	xcodebuild -create-xcframework \
-			-output lib${LIB_NAME}.xcframework \
-			-library ios-arm64/lib${LIB_NAME}.a \
-			-headers ios-arm64/lib${LIB_NAME}.h \
-			-library ios-simulator/lib${LIB_NAME}.a \
-			-headers ios-simulator/lib${LIB_NAME}.h
-	rm -rf ios-arm64
-	rm -rf ios-arm64-simulator
-	rm -rf ios-simulator
-	rm -rf ../ios/lib${LIB_NAME}.xcframework
-	mv lib${LIB_NAME}.xcframework ../ios/
 
 macos:
 	CGO_ENABLED=1 \

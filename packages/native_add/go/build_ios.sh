@@ -3,6 +3,7 @@ export GOOS=ios
 export CGO_ENABLED=1
 # export CGO_CFLAGS="-fembed-bitcode"
 # export MIN_VERSION=15
+PREBUILD_PATH=../prebuild
 
 SDK_PATH=$(xcrun --sdk "$SDK" --show-sdk-path)
 
@@ -22,4 +23,5 @@ CLANG=$(xcrun --sdk "$SDK" --find clang)
 CC="$CLANG -target $TARGET -isysroot $SDK_PATH $@"
 export CC
 
-go build -trimpath -buildmode=c-archive -o ${LIB_NAME}_${GOARCH}_${SDK}.a
+go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/iOS/$SDK/$CARCH/${LIB_NAME}.a
+rm $PREBUILD_PATH/iOS/$SDK/$CARCH/${LIB_NAME}.h
