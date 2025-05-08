@@ -1,22 +1,28 @@
-LIB_NAME=native_add
-PREBUILD_PATH=../prebuild
+# 默认 prefix 是 lib
+prefix = lib
+# 目标特定的变量：仅在 windows 任务中覆盖 prefix
+windows: prefix =
 
+LIB_NAME = $(prefix)native_add
+PREBUILD_PATH = ../prebuild
+
+# 其他任务默认使用 prefix=lib
 ios-x86_64-sim:
 	GOARCH=amd64 \
 	SDK=iphonesimulator \
-	LIB_NAME=lib${LIB_NAME} \
+	LIB_NAME=${LIB_NAME} \
 	./build_ios.sh
 
 ios-arm64-sim:
 	GOARCH=arm64 \
 	SDK=iphonesimulator \
-	LIB_NAME=lib${LIB_NAME} \
+	LIB_NAME=${LIB_NAME} \
 	./build_ios.sh
 
 ios-arm64:
 	GOARCH=arm64 \
 	SDK=iphoneos \
-	LIB_NAME=lib${LIB_NAME} \
+	LIB_NAME=${LIB_NAME} \
 	./build_ios.sh
 
 ios: ios-x86_64-sim ios-arm64-sim ios-arm64
@@ -26,21 +32,21 @@ macos:
 	GOOS=darwin \
 	GOARCH=arm64 \
 	SDK=macos \
-	go build -trimpath -buildmode=c-shared -o lib${LIB_NAME}_arm64.dylib .
+	go build -trimpath -buildmode=c-shared -o $(LIB_NAME)_arm64.dylib .
 	CGO_ENABLED=1 \
 	GOOS=darwin \
 	GOARCH=amd64 \
 	SDK=macos \
-	go build -trimpath -buildmode=c-shared -o lib${LIB_NAME}_amd64.dylib .
+	go build -trimpath -buildmode=c-shared -o $(LIB_NAME)_amd64.dylib .
 	lipo \
 		-create \
-		lib${LIB_NAME}_arm64.dylib \
-		lib${LIB_NAME}_amd64.dylib \
-		-output lib${LIB_NAME}.dylib
-	install_name_tool -id "@rpath/lib${LIB_NAME}.dylib" lib${LIB_NAME}.dylib
-	mv lib${LIB_NAME}.dylib ../macos/lib${LIB_NAME}.dylib
-	rm lib${LIB_NAME}_*.h
-	rm lib${LIB_NAME}_*.dylib
+		$(LIB_NAME)_arm64.dylib \
+		$(LIB_NAME)_amd64.dylib \
+		-output $(LIB_NAME).dylib
+	install_name_tool -id "@rpath/$(LIB_NAME).dylib" $(LIB_NAME).dylib
+	mv $(LIB_NAME).dylib ../macos/$(LIB_NAME).dylib
+	rm $(LIB_NAME)_*.h
+	rm $(LIB_NAME)_*.dylib
 
 windows:
 	CGO_ENABLED=1 \
@@ -53,5 +59,5 @@ linux:
 	CGO_ENABLED=1 \
 	GOOS=linux \
 	GOARCH=amd64 \
-	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/Linux/x86_64/lib${LIB_NAME}.so .
-	rm ${PREBUILD_PATH}/Linux/x86_64/lib${LIB_NAME}.h
+	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/Linux/x86_64/${LIB_NAME}.so .
+	rm ${PREBUILD_PATH}/Linux/x86_64/${LIB_NAME}.h
