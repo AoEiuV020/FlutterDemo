@@ -22,5 +22,5 @@ CLANG=$(xcrun --sdk "$SDK" --find clang)
 CC="$CLANG -target $TARGET -isysroot $SDK_PATH $@"
 export CC
 
-go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/iOS/$SDK/$CARCH/${LIB_NAME}.a
-rm $PREBUILD_PATH/iOS/$SDK/$CARCH/${LIB_NAME}.h
+go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/$SDK/$CARCH/${LIB_NAME}.a
+rm $PREBUILD_PATH/$SDK/$CARCH/${LIB_NAME}.h
