@@ -4,17 +4,17 @@ project(native_add_internal VERSION 0.0.1 LANGUAGES C)
 # 目标库名称
 set(TARGET_NAME "native_add")
 
-# 预编译库存放根目录
+# 预编译库存放的根目录
 set(PREBUILD_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/prebuild")
 
-# 根据平台设置布尔变量
+# 根据平台设置变量
 set(IS_MACOS FALSE)
 if(APPLE AND CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(IS_MACOS TRUE)
     message(STATUS "配置目标：macOS")
 endif()
 
-# 设置平台和 ABI 相关预编译库路径
+# 设置平台和 ABI 相关的库路径
 if(ANDROID)
     if(NOT CMAKE_ANDROID_ARCH_ABI)
         message(FATAL_ERROR "错误：未定义 CMAKE_ANDROID_ARCH_ABI。请确保使用 Android NDK 工具链。")
@@ -26,19 +26,14 @@ elseif(WIN32)
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/${TARGET_NAME}.dll")
     set(PREBUILD_IMPLIB_PATH "${PREBUILD_ABI_DIR}/${TARGET_NAME}.lib")
 elseif(IS_MACOS)
-    # macOS 预编译库路径
     set(PREBUILD_ABI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../macos")
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .dylib
-elseif(UNIX AND NOT APPLE AND NOT ANDROID) # Linux
+else() # Linux 或其他
     set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Linux/${CMAKE_SYSTEM_PROCESSOR}")
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .so
-else() # 其他平台或回退
-    message(WARNING "警告：平台检测回退。预编译库逻辑可能不准确。")
-    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
-    set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
-# 确保预编译库目标目录存在
+# 确保预编译库目标目录存在 (所有平台都需要)
 file(MAKE_DIRECTORY "${PREBUILD_ABI_DIR}")
 
 message(STATUS "目标系统：${CMAKE_SYSTEM_NAME}")
@@ -54,8 +49,8 @@ if(WIN32 AND EXISTS "${PREBUILD_LIB_PATH}")
     message(STATUS "检查 Windows 导入库是否存在于：${PREBUILD_IMPLIB_PATH}")
 endif()
 
-# 检查预编译库是否存在
-if(EXISTS "${PREBUILD_LIB_PATH}" AND (NOT WIN32 OR EXISTS "${PREBUILD_IMPLIB_PATH}"))
+# 检查预编译库是否存在 (macOS 始终跳过)
+if(EXISTS "${PREBUILD_LIB_PATH}" AND (NOT WIN32 OR EXISTS "${PREBUILD_IMPLIB_PATH}") AND NOT IS_MACOS)
     message(STATUS "使用预编译库：${PREBUILD_LIB_PATH}")
 
     if(ANDROID)
@@ -71,13 +66,7 @@ if(EXISTS "${PREBUILD_LIB_PATH}" AND (NOT WIN32 OR EXISTS "${PREBUILD_IMPLIB_PAT
             COMMENT "复制 Android 预编译库 ${PREBUILD_LIB_PATH} 到 $<TARGET_FILE:${TARGET_NAME}>"
             VERBATIM
         )
-    elseif(IS_MACOS)
-        # macOS 导入共享库 (.dylib)
-        add_library(${TARGET_NAME} SHARED IMPORTED GLOBAL)
-        set_target_properties(${TARGET_NAME} PROPERTIES
-            IMPORTED_LOCATION "${PREBUILD_LIB_PATH}"
-        )
-    else() # Windows 和其他平台（例如 Linux）
+    else() # Windows 和 Linux
         add_library(${TARGET_NAME} SHARED IMPORTED GLOBAL)
         set_target_properties(${TARGET_NAME} PROPERTIES
             IMPORTED_LOCATION "${PREBUILD_LIB_PATH}"
@@ -99,28 +88,26 @@ if(EXISTS "${PREBUILD_LIB_PATH}" AND (NOT WIN32 OR EXISTS "${PREBUILD_IMPLIB_PAT
     endif()
 
 else()
-    message(STATUS "未找到预编译库或不完整。从源代码构建...")
+    message(STATUS "IS_MACOS或未找到预编译库或不完整。从源代码构建...")
 
     # 源文件
     set(NATIVE_SOURCES "native_add.c")
     set(NATIVE_HEADERS "native_add.h")
 
-    if(IS_MACOS)
-        # macOS 构建共享库 (.dylib)
-        add_library(${TARGET_NAME} SHARED ${NATIVE_SOURCES})
-        set_target_properties(${TARGET_NAME} PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
-            INSTALL_NAME_DIR "@rpath"
-            MACOSX_RPATH ON
-        )
-    else() # Android, Windows, Linux
-        add_library(${TARGET_NAME} SHARED ${NATIVE_SOURCES})
-    endif()
+    add_library(${TARGET_NAME} SHARED ${NATIVE_SOURCES})
 
     set_target_properties(${TARGET_NAME} PROPERTIES
         PUBLIC_HEADER "${NATIVE_HEADERS}"
         OUTPUT_NAME "${TARGET_NAME}"
     )
+
+    if(IS_MACOS)
+        set_target_properties(${TARGET_NAME} PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            INSTALL_NAME_DIR "@rpath"
+            MACOSX_RPATH ON
+        )
+    endif()
 
     if(WIN32)
         # 为 Windows DLL 定义导出宏
@@ -138,7 +125,7 @@ else()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release)
     # --- 输出目录配置结束 ---
 
-    # POST_BUILD: 复制构建产物到预编译目录
+    # POST_BUILD: 复制构建产物到预编译目录 (所有平台都会执行)
     if(IS_MACOS)
         set(BUILT_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}") # .dylib
         set(BUILT_LIB_FILE_VAR "$<TARGET_FILE:${TARGET_NAME}>")
