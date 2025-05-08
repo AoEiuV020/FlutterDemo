@@ -14,5 +14,8 @@ func sum_long_running(a C.int, b C.int) C.int {
 	return C.int(SumLongRunning(int(a), int(b)))
 }
 
+//export enforce_binding
+func enforce_binding() {}
+
 func main() {
 }
