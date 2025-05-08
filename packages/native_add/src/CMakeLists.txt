@@ -44,7 +44,7 @@ elseif(IS_MACOS)
     else()
         set(PREBUILD_ARCH_DIR_PART "universal") # Fallback or convention
     endif()
-    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Darwin/${PREBUILD_ARCH_DIR_PART}")
+    set(PREBUILD_ABI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../macos")
     # MODIFIED: Expect .dylib for macOS prebuilt
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .dylib
 elseif(UNIX AND NOT APPLE AND NOT ANDROID) # Linux

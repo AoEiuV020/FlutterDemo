@@ -27,6 +27,7 @@ A new Flutter FFI plugin project.
   # s.resource_bundles = {'native_add_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
 
   s.dependency 'FlutterMacOS'
+  s.vendored_libraries  = 'libnative_add.dylib'
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
