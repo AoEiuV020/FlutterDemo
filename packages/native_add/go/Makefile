@@ -1,4 +1,5 @@
 LIB_NAME=native_add
+PREBUILD_PATH=../prebuild
 
 macos:
 	CGO_ENABLED=1 \
@@ -20,3 +21,10 @@ macos:
 	mv lib${LIB_NAME}.dylib ../macos/lib${LIB_NAME}.dylib
 	rm lib${LIB_NAME}_*.h
 	rm lib${LIB_NAME}_*.dylib
+
+windows:
+	CGO_ENABLED=1 \
+	GOOS=windows \
+	GOARCH=amd64 \
+	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/Windows/AMD64/${LIB_NAME}.dll .
+	rm ${PREBUILD_PATH}/Windows/AMD64/${LIB_NAME}.h
