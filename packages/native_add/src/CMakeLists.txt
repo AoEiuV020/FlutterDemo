@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10) # 建议使用较新版本如3.18+ 以获得更好的Android支持
+cmake_minimum_required(VERSION 3.14) # 建议升级，3.10 太老了
 project(native_add_internal VERSION 0.0.1 LANGUAGES C)
 
 # 目标库名称
@@ -7,30 +7,63 @@ set(TARGET_NAME "native_add")
 # 预编译库存放的根目录
 set(PREBUILD_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/prebuild")
 
+# 根据平台设置变量
+set(IS_MACOS FALSE)
+if(APPLE AND CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    # More specific check if you also plan to support iOS/tvOS/watchOS in this CMake file
+    # if(APPLE AND NOT IOS AND NOT TVOS AND NOT WATCHOS)
+    set(IS_MACOS TRUE)
+    message(STATUS "Configuring for macOS")
+endif()
+
 # 设置平台和ABI相关的库路径
 if(ANDROID)
-    # CMAKE_ANDROID_ARCH_ABI 由 Android NDK toolchain 文件设置, e.g., armeabi-v7a, arm64-v8a
     if(NOT CMAKE_ANDROID_ARCH_ABI)
         message(FATAL_ERROR "CMAKE_ANDROID_ARCH_ABI is not defined. Ensure you are using the Android NDK toolchain.")
     endif()
-    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_ANDROID_ARCH_ABI}")
-    set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # e.g. /path/to/prebuild/Android/arm64-v8a/libnative_add.so
+    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Android/${CMAKE_ANDROID_ARCH_ABI}")
+    set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .so
 elseif(WIN32)
-    # CMAKE_SYSTEM_PROCESSOR on Windows is typically AMD64, x86 etc.
-    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
+    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Windows/${CMAKE_SYSTEM_PROCESSOR}") # e.g., AMD64, x86
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/${TARGET_NAME}.dll")
     set(PREBUILD_IMPLIB_PATH "${PREBUILD_ABI_DIR}/${TARGET_NAME}.lib")
-else() # Other platforms like Linux, macOS
+elseif(IS_MACOS)
+    # For macOS, CMAKE_SYSTEM_PROCESSOR might not be set early by podspec.
+    # CMAKE_OSX_ARCHITECTURES (e.g., "arm64;x86_64") will be set by the podspec.
+    # We'll handle architecture variations in the prebuild check or assume universal binary for prebuilts.
+    if(DEFINED CMAKE_OSX_ARCHITECTURES AND NOT "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+        # If building for specific arch (e.g. "arm64" or "x86_64" - not a list "arm64;x86_64")
+        # This gets complex if CMAKE_OSX_ARCHITECTURES is a list.
+        # For prebuilts, it's easier to assume a universal prebuilt or one for CMAKE_HOST_SYSTEM_PROCESSOR
+        # Or that the pod's s.prepare_command logic picks the right prebuilt.
+        # For now, let's assume a prebuilt exists for CMAKE_HOST_SYSTEM_PROCESSOR if specific.
+        # A better prebuilt strategy for macOS might involve checking for each arch in CMAKE_OSX_ARCHITECTURES.
+        # For simplicity, we'll check a common path.
+        set(PREBUILD_ARCH_DIR_PART "${CMAKE_SYSTEM_PROCESSOR}") # This will be set if podspec calls CMake for a single arch
+                                                                # or CMAKE_HOST_SYSTEM_PROCESSOR if not specific
+    else()
+        set(PREBUILD_ARCH_DIR_PART "universal") # Fallback or convention
+    endif()
+    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Darwin/${PREBUILD_ARCH_DIR_PART}")
+    # MODIFIED: Expect .dylib for macOS prebuilt
+    set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .dylib
+elseif(UNIX AND NOT APPLE AND NOT ANDROID) # Linux
+    set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/Linux/${CMAKE_SYSTEM_PROCESSOR}")
+    set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}") # .so
+else() # Other platforms or fallback
+    message(WARNING "Platform detection fallback. Prebuilt logic might not be accurate.")
     set(PREBUILD_ABI_DIR "${PREBUILD_ROOT_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}")
     set(PREBUILD_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
-# 确保预编译库目标目录存在，以便后续从源码构建时可以复制过去
+# 确保预编译库目标目录存在
 file(MAKE_DIRECTORY "${PREBUILD_ABI_DIR}")
 
 message(STATUS "Targeting System: ${CMAKE_SYSTEM_NAME}")
 if(ANDROID)
     message(STATUS "Targeting ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+elseif(IS_MACOS)
+    message(STATUS "Targeting macOS Architectures: ${CMAKE_OSX_ARCHITECTURES} (Host: ${CMAKE_HOST_SYSTEM_PROCESSOR})")
 else()
     message(STATUS "Targeting Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
@@ -44,93 +77,152 @@ if(EXISTS "${PREBUILD_LIB_PATH}" AND (NOT WIN32 OR EXISTS "${PREBUILD_IMPLIB_PAT
     message(STATUS "Using prebuilt library: ${PREBUILD_LIB_PATH}")
 
     if(ANDROID)
-        # 对于Android，如果直接使用 IMPORTED 库作为Gradle的构建目标，AGP可能不会打包它。
-        # 一个解决方法是创建一个普通的SHARED库，然后通过自定义命令将预编译库复制到其预期的输出位置。
-        # 这会“欺骗”AGP，让它认为这个库是由CMake构建的。
-        # 你需要一个虚拟的源文件，或者使用更高级的CMake技巧避免它。
-        # 创建一个空的 dummy.c 文件: e.g., void dummy() {}
+        # Android prebuilt dummy lib approach (as in your original)
         if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/dummy.c")
-            file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/dummy.c" "void _dummy_native_add_function_() {} // Dummy source for prebuilt library\n")
+            file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/dummy.c" "void _dummy_native_add_function_() {} \n")
         endif()
         add_library(${TARGET_NAME} SHARED "${CMAKE_CURRENT_SOURCE_DIR}/dummy.c")
-
-        # 构建后命令：将预编译库复制到CMake的输出位置
-        # $<TARGET_FILE:${TARGET_NAME}> 会解析为CMake构建此目标时应输出的完整路径
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${PREBUILD_LIB_PATH}"
-                "$<TARGET_FILE:${TARGET_NAME}>"
-                COMMENT "Copying prebuilt Android library ${PREBUILD_LIB_PATH} to $<TARGET_FILE:${TARGET_NAME}>"
-                VERBATIM # 确保 $<TARGET_FILE:...> 正确展开
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${PREBUILD_LIB_PATH}"
+            "$<TARGET_FILE:${TARGET_NAME}>"
+            COMMENT "Copying prebuilt Android library ${PREBUILD_LIB_PATH} to $<TARGET_FILE:${TARGET_NAME}>"
+            VERBATIM
         )
-        # 如果预编译库有特定的链接依赖（比如log库），也需要在这里声明
-        # target_link_libraries(${TARGET_NAME} PUBLIC log) # 示例
-
-    else() # Windows 和其他平台可以使用 IMPORTED GLOBAL
+    elseif(IS_MACOS)
+        # MODIFIED: Import as SHARED for macOS .dylib
         add_library(${TARGET_NAME} SHARED IMPORTED GLOBAL)
         set_target_properties(${TARGET_NAME} PROPERTIES
-                IMPORTED_LOCATION "${PREBUILD_LIB_PATH}"
+            IMPORTED_LOCATION "${PREBUILD_LIB_PATH}"
+        )
+    else() # Windows and other platforms (e.g. Linux)
+        add_library(${TARGET_NAME} SHARED IMPORTED GLOBAL) # SHARED for others
+        set_target_properties(${TARGET_NAME} PROPERTIES
+            IMPORTED_LOCATION "${PREBUILD_LIB_PATH}"
         )
         if(WIN32)
             set_target_properties(${TARGET_NAME} PROPERTIES
-                    IMPORTED_IMPLIB "${PREBUILD_IMPLIB_PATH}"
+                IMPORTED_IMPLIB "${PREBUILD_IMPLIB_PATH}"
             )
         endif()
     endif()
-    # 公共头文件和定义仍然需要设置，以便其他目标可以正确链接
+
     set_target_properties(${TARGET_NAME} PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}" # 假设 native_add.h 在源目录
+        INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}" # Assumes native_add.h is in src/
     )
-    if(NOT ANDROID) # Android 的 POST_BUILD 复制方案已经是一个 "构建" 目标了
+    # DART_SHARED_LIB is a common convention for FFI visibility, adjust if your macro is different
+    if(NOT ANDROID) # Android POST_BUILD copy means the dummy lib is the one getting compile defs
         target_compile_definitions(${TARGET_NAME} INTERFACE DART_SHARED_LIB)
     else()
         target_compile_definitions(${TARGET_NAME} PUBLIC DART_SHARED_LIB)
     endif()
 
-
 else()
     message(STATUS "Prebuilt library not found or incomplete. Building from source...")
 
-    add_library(${TARGET_NAME} SHARED "native_add.c")
+    # Source files (assuming native_add.c and native_add.h)
+    set(NATIVE_SOURCES "native_add.c")
+    set(NATIVE_HEADERS "native_add.h") # Used for PUBLIC_HEADER
+
+    if(IS_MACOS)
+        # MODIFIED: Build as SHARED for macOS to produce .dylib
+        add_library(${TARGET_NAME} SHARED ${NATIVE_SOURCES})
+        # For macOS, ensure universal binaries if CMAKE_OSX_ARCHITECTURES specifies multiple
+        # CMake + Xcode generator usually handles this automatically.
+        # For SHARED libraries on macOS, POSITION_INDEPENDENT_CODE is implied or handled by default.
+        # Explicitly setting it is not harmful.
+        set_target_properties(${TARGET_NAME} PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            # It's good practice to set the install name for dylibs, especially if they might be moved
+            # or bundled. @rpath is a common choice for libraries intended to be bundled within an app.
+            INSTALL_NAME_DIR "@rpath" # Or specific path like "@loader_path/../lib" etc.
+            MACOSX_RPATH ON # Ensures that executables linking this dylib have the correct rpath set
+        )
+    else() # Android, Windows, Linux
+        add_library(${TARGET_NAME} SHARED ${NATIVE_SOURCES})
+    endif()
+
     set_target_properties(${TARGET_NAME} PROPERTIES
-            PUBLIC_HEADER "native_add.h" # PUBLIC_HEADER 会自动添加 INTERFACE_INCLUDE_DIRECTORIES
-            OUTPUT_NAME "${TARGET_NAME}" # 通常不需要，除非你想覆盖默认名称规则
+        PUBLIC_HEADER "${NATIVE_HEADERS}" # This sets INTERFACE_INCLUDE_DIRECTORIES to CMAKE_CURRENT_SOURCE_DIR
+        OUTPUT_NAME "${TARGET_NAME}" # For macOS, SHARED + OUTPUT_NAME "native_add" -> libnative_add.dylib
     )
 
     if(WIN32)
-        target_compile_definitions(${TARGET_NAME} PRIVATE "EXPORT=__declspec(dllexport)")
+        # Define EXPORT macro for Windows DLLs
+        target_compile_definitions(${TARGET_NAME} PRIVATE "NATIVE_ADD_EXPORT=__declspec(dllexport)")
+        # Your native_add.h should use NATIVE_ADD_EXPORT for functions to be exported.
+        # e.g. NATIVE_ADD_EXPORT int32_t native_add(int32_t x, int32_t y);
     endif()
 
-    target_compile_definitions(${TARGET_NAME} PUBLIC DART_SHARED_LIB)
+    target_compile_definitions(${TARGET_NAME} PUBLIC DART_SHARED_LIB) # Or whatever your FFI visibility macro is
 
-    # 构建后保存为预编译库
+    # --- Output Directories for Podspec Integration (when building from source) ---
+    # This ensures the library is placed where the podspec's LIBRARY_SEARCH_PATHS expects it.
+    # The podspec's s.prepare_command runs CMake in a 'build' subdirectory of the pod.
+    # CMAKE_BINARY_DIR will be that 'build' directory.
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib/Debug)     # For .a (if any static libs were built)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib/Release)  # For .a
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/lib/Debug)     # For .dylib, .so
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/lib/Release)  # For .dylib, .so
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug)     # For .dll, executables
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release)  # For .dll, executables
+    # --- End Output Directories ---
+
+    # POST_BUILD: Copy to prebuild location (for future use as prebuilt)
+    # Determine correct suffix for POST_BUILD copy based on platform
+    if(IS_MACOS)
+        # MODIFIED: Suffix for .dylib
+        set(BUILT_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}") # .dylib
+        set(BUILT_LIB_FILE_VAR "$<TARGET_FILE:${TARGET_NAME}>") # For shared libs, this is correct
+    elseif(WIN32)
+        set(BUILT_LIB_SUFFIX ".dll") # Primary artifact
+        set(BUILT_LIB_FILE_VAR "$<TARGET_FILE:${TARGET_NAME}>") # This usually points to the .dll
+    else() # Linux, Android (shared libs)
+        set(BUILT_LIB_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}") # .so
+        set(BUILT_LIB_FILE_VAR "$<TARGET_FILE:${TARGET_NAME}>")
+    endif()
+
+    # MODIFIED: Simplified destination path logic
+    # For .dylib on macOS and .so on Linux/Android, the 'lib' prefix is standard.
+    # For .dll on Windows, no 'lib' prefix.
+    if(WIN32)
+        set(DEST_PREBUILT_LIB_PATH "${PREBUILD_ABI_DIR}/${TARGET_NAME}${BUILT_LIB_SUFFIX}")
+    else() # macOS, Linux, Android
+        set(DEST_PREBUILT_LIB_PATH "${PREBUILD_ABI_DIR}/lib${TARGET_NAME}${BUILT_LIB_SUFFIX}")
+    endif()
+
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${PREBUILD_ABI_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:${TARGET_NAME}>"
-            "${PREBUILD_LIB_PATH}"
-            COMMENT "Saving built library to prebuild location: ${PREBUILD_LIB_PATH}"
-            VERBATIM
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${PREBUILD_ABI_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${BUILT_LIB_FILE_VAR}"
+        "${DEST_PREBUILT_LIB_PATH}"
+        COMMENT "Saving built library to prebuild location: ${DEST_PREBUILT_LIB_PATH}"
+        VERBATIM
     )
 
     if(WIN32)
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_LINKER_FILE:${TARGET_NAME}>" # $<TARGET_LINKER_FILE:...> 获取 .lib 文件
-                "${PREBUILD_IMPLIB_PATH}"
-                COMMENT "Saving Windows import library: ${PREBUILD_IMPLIB_PATH}"
-                VERBATIM
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_LINKER_FILE:${TARGET_NAME}>" # .lib import library
+            "${PREBUILD_IMPLIB_PATH}"
+            COMMENT "Saving Windows import library: ${PREBUILD_IMPLIB_PATH}"
+            VERBATIM
         )
     endif()
 endif()
 
-# 通用设置，无论是否预编译
+# 通用设置
 if(ANDROID)
-    # Android平台特定链接选项
-    # 注意：如果使用上面的Android预编译方案，此链接选项需要加给 ${TARGET_NAME}
     target_link_options(${TARGET_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
 endif()
 
-# 如果你的项目中有其他目标链接到 native_add，例如一个可执行文件或另一个库：
-# add_executable(my_app main.c)
-# target_link_libraries(my_app PRIVATE ${TARGET_NAME})
+if(IS_MACOS)
+    # Ensure deployment target is set for macOS if building from source.
+    # The podspec usually passes this via CMAKE_OSX_DEPLOYMENT_TARGET.
+    # If not (e.g. direct CMake usage), set a default.
+    if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS deployment target")
+    endif()
+    message(STATUS "macOS Deployment Target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    # Architectures (CMAKE_OSX_ARCHITECTURES) are passed by the podspec.
+endif()
