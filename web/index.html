@@ -31,6 +31,13 @@
 
   <title>demo</title>
   <link rel="manifest" href="manifest.json">
+  <script src="wasm_exec.js"></script>
+  <script>
+    const go = new Go();
+    WebAssembly.instantiateStreaming(fetch("libnative_add.wasm"), go.importObject).then((result) => {
+      go.run(result.instance);
+    });
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

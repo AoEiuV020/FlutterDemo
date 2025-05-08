@@ -33,6 +33,8 @@ else ifeq ($(MAKECMDGOALS),windows)
 	LIB_PREFIX :=
 else ifeq ($(MAKECMDGOALS),linux)
 	PLATFORM = Linux
+else ifeq ($(MAKECMDGOALS),web)
+	PLATFORM = Web
 else
 	PLATFORM = $(MAKECMDGOALS)
 endif
@@ -138,3 +140,9 @@ linux:
 	GOARCH=amd64 \
 	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/x86_64/${LIB_NAME}.so .
 	rm ${PREBUILD_PATH}/x86_64/${LIB_NAME}.h
+
+web:
+	GOOS=js \
+	GOARCH=wasm \
+	go build -o ${PREBUILD_PATH}/${LIB_NAME}.wasm .
+	cp "$(shell go env GOROOT)/lib/wasm/wasm_exec.js" ${PREBUILD_PATH}/
