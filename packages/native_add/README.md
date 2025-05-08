@@ -1,92 +1,61 @@
 # native_add
 
-A new Flutter FFI plugin project.
+Golang FFI 插件项目，用于 Flutter 跨平台开发
 
-## Getting Started
+## 项目概述
 
-This project is a starting point for a Flutter
-[FFI plugin](https://flutter.dev/to/ffi-package),
-a specialized package that includes native code directly invoked with Dart FFI.
+本项目通过 Go 语言实现跨平台原生功能，编译为 android/ios/windows/linux/macos/web 全平台原生库供 Flutter 调用。
 
-## Project structure
+## 快速开始
 
-This template uses the following structure:
+### 测试环境
+- Go 1.24.1
+- Flutter 3.29.3
+- Make 3.81
+- 各平台构建工具（Android NDK、Xcode等）
 
-* `src`: Contains the native source code, and a CmakeFile.txt file for building
-  that source code into a dynamic library.
-
-* `lib`: Contains the Dart code that defines the API of the plugin, and which
-  calls into the native code using `dart:ffi`.
-
-* platform folders (`android`, `ios`, `windows`, etc.): Contains the build files
-  for building and bundling the native code library with the platform application.
-
-## Building and bundling native code
-
-The `pubspec.yaml` specifies FFI plugins as follows:
-
-```yaml
-  plugin:
-    platforms:
-      some_platform:
-        ffiPlugin: true
+### 构建命令
+进入go项目目录 [./go/](./go/)，执行以下命令：
+```bash
+# 构建所有平台，ios/mac/windows/linux 需要在各自平台下执行，
+make android
+make ios
+make windows
+make linux
+make macos
+make web
 ```
 
-This configuration invokes the native build for the various target platforms
-and bundles the binaries in Flutter applications using these FFI plugins.
+## 平台集成指南
 
-This can be combined with dartPluginClass, such as when FFI is used for the
-implementation of one platform in a federated plugin:
+### 通用说明
+- 所有构建产物位于 [./prebuild/](./prebuild/) 目录， 按照平台和架构命名放置
+- 所有预编译库的名字都写死为插件名字，如 `libnative_add.so`，以便统一以及复用默认的 DynamicLibrary.open 代码，
 
-```yaml
-  plugin:
-    implements: some_other_plugin
-    platforms:
-      some_platform:
-        dartPluginClass: SomeClass
-        ffiPlugin: true
+### Android
+修改 [./android/build.gradle](./android/build.gradle) 配置：
+```gradle
+android {
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["${project.projectDir}/../prebuild/Android"]
+        }
+    }
+}
 ```
+[./go/Makefile](./go/Makefile) 中写死了 NDK_VERSION = 27.2.12479018 ，请根据实际情况修改
 
-A plugin can have both FFI and method channels:
+### iOS/macOS
+修改 [./ios/native_add.podspec](./ios/native_add.podspec) 和 [./macos/native_add.podspec](./macos/native_add.podspec)
+- 使用 `force_load` 加载静态库
+- 修改后需清除 Flutter app 模块的 build 缓存
 
-```yaml
-  plugin:
-    platforms:
-      some_platform:
-        pluginClass: SomeName
-        ffiPlugin: true
-```
+### Windows/Linux
+修改 [./windows/CMakeLists.txt](./windows/CMakeLists.txt) 和 [./linux/CMakeLists.txt](./linux/CMakeLists.txt)
+- 直接设置预编译库到 native_add_bundled_libraries ，不再需要原本的src,
 
-The native build systems that are invoked by FFI (and method channel) plugins are:
-
-* For Android: Gradle, which invokes the Android NDK for native builds.
-  * See the documentation in android/build.gradle.
-* For iOS and MacOS: Xcode, via CocoaPods.
-  * See the documentation in ios/native_add.podspec.
-  * See the documentation in macos/native_add.podspec.
-* For Linux and Windows: CMake.
-  * See the documentation in linux/CMakeLists.txt.
-  * See the documentation in windows/CMakeLists.txt.
-
-## Binding to native code
-
-To use the native code, bindings in Dart are needed.
-To avoid writing these by hand, they are generated from the header file
-(`src/native_add.h`) by `package:ffigen`.
-Regenerate the bindings by running `dart run ffigen --config ffigen.yaml`.
-
-## Invoking native code
-
-Very short-running native functions can be directly invoked from any isolate.
-For example, see `sum` in `lib/native_add.dart`.
-
-Longer-running functions should be invoked on a helper isolate to avoid
-dropping frames in Flutter applications.
-For example, see `sumAsync` in `lib/native_add.dart`.
-
-## Flutter help
-
-For help getting started with Flutter, view our
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
+### Web
+1. 复制 `libnative_add.wasm` 和 `wasm_exec.js` 到 Flutter web 目录
+2. 参考 [./example/web/index.html](./example/web/index.html) 配置 wasm 加载
+- [./lib/go_web.dart](./lib/go_web.dart) 使用 extension 拓展 JSWindow 以便调用 go wasm 暴露出来的函数，
+- [./lib/native_add_web.dart](./lib/native_add_web.dart) promise等各种js中的对象需要toDart使用，
