@@ -28,3 +28,10 @@ windows:
 	GOARCH=amd64 \
 	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/Windows/AMD64/${LIB_NAME}.dll .
 	rm ${PREBUILD_PATH}/Windows/AMD64/${LIB_NAME}.h
+
+linux:
+	CGO_ENABLED=1 \
+	GOOS=linux \
+	GOARCH=amd64 \
+	go build -trimpath -buildmode=c-shared -o ${PREBUILD_PATH}/Linux/x86_64/lib${LIB_NAME}.so .
+	rm ${PREBUILD_PATH}/Linux/x86_64/lib${LIB_NAME}.h
