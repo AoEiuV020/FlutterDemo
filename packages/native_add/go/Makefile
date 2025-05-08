@@ -1,12 +1,50 @@
+ANDROID_OUT=$(PREBUILD_PATH)/Android
+NDK_BIN=$(ANDROID_HOME)/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin
+
+PREBUILD_PATH = ../prebuild
+
 # 默认 prefix 是 lib
 prefix = lib
 # 目标特定的变量：仅在 windows 任务中覆盖 prefix
 windows: prefix =
 
 LIB_NAME = $(prefix)native_add
-PREBUILD_PATH = ../prebuild
 
-# 其他任务默认使用 prefix=lib
+android-armv7a:
+	CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=arm \
+	GOARM=7 \
+	CC=$(NDK_BIN)/armv7a-linux-androideabi21-clang \
+	go build -buildmode=c-shared -o $(ANDROID_OUT)/armeabi-v7a/${LIB_NAME}.so .
+	rm ${ANDROID_OUT}/armeabi-v7a/${LIB_NAME}.h
+
+android-arm64:
+	CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=arm64 \
+	CC=$(NDK_BIN)/aarch64-linux-android21-clang \
+	go build -buildmode=c-shared -o $(ANDROID_OUT)/arm64-v8a/${LIB_NAME}.so .
+	rm ${ANDROID_OUT}/arm64-v8a/${LIB_NAME}.h
+
+android-x86:
+	CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=386 \
+	CC=$(NDK_BIN)/i686-linux-android21-clang \
+	go build -buildmode=c-shared -o $(ANDROID_OUT)/x86/${LIB_NAME}.so .
+	rm ${ANDROID_OUT}/x86/${LIB_NAME}.h
+
+android-x86_64:
+	CGO_ENABLED=1 \
+	GOOS=android \
+	GOARCH=amd64 \
+	CC=$(NDK_BIN)/x86_64-linux-android21-clang \
+	go build -buildmode=c-shared -o $(ANDROID_OUT)/x86_64/${LIB_NAME}.so .
+	rm ${ANDROID_OUT}/x86_64/${LIB_NAME}.h
+
+android: android-armv7a android-arm64 android-x86 android-x86_64
+
 ios-x86_64-sim:
 	GOARCH=amd64 \
 	SDK=iphonesimulator \
