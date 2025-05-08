@@ -3,7 +3,6 @@ export GOOS=ios
 export CGO_ENABLED=1
 # export CGO_CFLAGS="-fembed-bitcode"
 # export MIN_VERSION=15
-PREBUILD_PATH=../prebuild
 
 SDK_PATH=$(xcrun --sdk "$SDK" --show-sdk-path)
 

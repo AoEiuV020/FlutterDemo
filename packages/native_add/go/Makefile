@@ -11,18 +11,21 @@ ios-x86_64-sim:
 	GOARCH=amd64 \
 	SDK=iphonesimulator \
 	LIB_NAME=${LIB_NAME} \
+	PREBUILD_PATH=${PREBUILD_PATH} \
 	./build_ios.sh
 
 ios-arm64-sim:
 	GOARCH=arm64 \
 	SDK=iphonesimulator \
 	LIB_NAME=${LIB_NAME} \
+	PREBUILD_PATH=${PREBUILD_PATH} \
 	./build_ios.sh
 
 ios-arm64:
 	GOARCH=arm64 \
 	SDK=iphoneos \
 	LIB_NAME=${LIB_NAME} \
+	PREBUILD_PATH=${PREBUILD_PATH} \
 	./build_ios.sh
 
 ios: ios-x86_64-sim ios-arm64-sim ios-arm64
