@@ -2,6 +2,7 @@
 export GOOS=darwin
 export CGO_ENABLED=1
 export SDK=macos
+export MACOSX_DEPLOYMENT_TARGET=10.11 # 和.podspec 中的platform一致
 
 if [ "$GOARCH" = "amd64" ]; then
     CARCH="x86_64"
