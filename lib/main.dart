@@ -63,6 +63,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _incrementCounterString() {
+    setState(() {
+      _counter = int.parse(
+        native_add.sumString(_counter.toString(), 1.toString()),
+      );
+    });
+  }
+
   Future<void> _incrementCounterAsync() async {
     final result = await native_add.sumAsync(_counter, 1);
     setState(() {
@@ -124,6 +132,12 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _incrementCounter,
             tooltip: 'Increment',
             child: const Icon(Icons.add),
+          ),
+          const SizedBox(width: 16),
+          FloatingActionButton(
+            onPressed: _incrementCounterString,
+            tooltip: 'Increment String',
+            child: const Icon(Icons.title),
           ),
           const SizedBox(width: 16),
           FloatingActionButton(

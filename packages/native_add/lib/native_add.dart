@@ -4,3 +4,5 @@ import 'native_add_io.dart'
 
 int sum(int a, int b) => native_add.sum(a, b);
 Future<int> sumAsync(int a, int b) => native_add.sumAsync(a, b);
+
+String sumString(String a, String b) => native_add.sumString(a, b);

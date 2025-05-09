@@ -28,3 +28,9 @@ FFI_PLUGIN_EXPORT int sum(int a, int b);
 // block Dart execution. This will cause dropped frames in Flutter applications.
 // Instead, call these native functions on a separate isolate.
 FFI_PLUGIN_EXPORT int sum_long_running(int a, int b);
+
+// String addition function
+FFI_PLUGIN_EXPORT char* sum_string(const char* a, const char* b);
+
+// 非常重要：您必须提供一个函数来释放 sum_string 返回的内存
+FFI_PLUGIN_EXPORT void free_string(char* str);

@@ -54,4 +54,41 @@ class NativeAddBindings {
       );
   late final _sum_long_running =
       _sum_long_runningPtr.asFunction<int Function(int, int)>();
+
+  /// String addition function
+  ffi.Pointer<ffi.Char> sum_string(
+    ffi.Pointer<ffi.Char> a,
+    ffi.Pointer<ffi.Char> b,
+  ) {
+    return _sum_string(a, b);
+  }
+
+  late final _sum_stringPtr = _lookup<
+    ffi.NativeFunction<
+      ffi.Pointer<ffi.Char> Function(
+        ffi.Pointer<ffi.Char>,
+        ffi.Pointer<ffi.Char>,
+      )
+    >
+  >('sum_string');
+  late final _sum_string =
+      _sum_stringPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+            )
+          >();
+
+  /// 非常重要：您必须提供一个函数来释放 sum_string 返回的内存
+  void free_string(ffi.Pointer<ffi.Char> str) {
+    return _free_string(str);
+  }
+
+  late final _free_stringPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+        'free_string',
+      );
+  late final _free_string =
+      _free_stringPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 }

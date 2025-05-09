@@ -13,3 +13,7 @@ Future<int> sumAsync(int a, int b) async {
   final result = await jsWindow.sum_long_running(a, b).toDart;
   return result.toDartInt;
 }
+
+String sumString(String a, String b) {
+  return jsWindow.sum_string(a, b).toDart;
+}
