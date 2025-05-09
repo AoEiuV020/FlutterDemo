@@ -44,6 +44,11 @@ const server = http.createServer((req, res) => {
 		const result = globalThis.sum(a, b);
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end(result.toString());
+	} else if (uri.pathname === '/sumString') {
+        // curl 'localhost:8080/sumString?a=3&b=4'
+		const result = globalThis.sum_string(query.a, query.b);
+		res.writeHead(200, {'Content-Type': 'text/plain'});
+		res.end(result);
 	} else {
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end('Server running to keep Node.js alive\n');
