@@ -15,5 +15,5 @@ Future<int> sumAsync(int a, int b) async {
 }
 
 String sumString(String a, String b) {
-  return jsWindow.sum_string(a, b).toDart;
+  return jsWindow.sum_string(a, b);
 }

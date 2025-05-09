@@ -45,6 +45,13 @@ func registerCallbacks() {
         return Sum(a, b)
     }))
     
+    // 字符串加法函数
+    js.Global().Set("sum_string", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+        a := args[0].String()
+        b := args[1].String()
+        return SumString(a, b)
+    }))
+    
     // 使用Promise封装的函数
     js.Global().Set("sum_long_running", ToPromise(func(args []js.Value) interface{} {
         a := args[0].Int()

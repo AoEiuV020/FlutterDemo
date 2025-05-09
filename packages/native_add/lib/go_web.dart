@@ -9,5 +9,5 @@ class JSWindow {}
 extension JSWindowExtension on JSWindow {
   external int sum(int a, int b);
   external JSPromise<JSNumber> sum_long_running(int a, int b);
-  external JSString sum_string(String a, String b);
+  external String sum_string(String a, String b);
 }
