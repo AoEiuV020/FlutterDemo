@@ -56,6 +56,6 @@ android {
 
 ### Web
 1. 复制 `libnative_add.wasm` 和 `wasm_exec.js` 到 Flutter web 目录
-2. 参考 [./example/web/index.html](./example/web/index.html) 配置 wasm 加载
+2. 参考 [../../web/index.html](../../web/index.html) 配置 go wasm 加载
 - [./lib/go_web.dart](./lib/go_web.dart) 使用 extension 拓展 JSWindow 以便调用 go wasm 暴露出来的函数，
 - [./lib/native_add_web.dart](./lib/native_add_web.dart) promise等各种js中的对象需要toDart使用，

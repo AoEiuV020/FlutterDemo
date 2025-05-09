@@ -12,14 +12,5 @@
                 "--web-hostname=127.0.0.1", // https://github.com/flutter/flutter/issues/53338
             ]
         },
-        {
-            "name": "example",
-            "cwd": "packages/native_add/example",
-            "request": "launch",
-            "type": "dart",
-            "args": [
-                "--web-hostname=127.0.0.1", // https://github.com/flutter/flutter/issues/53338
-            ]
-        },
     ]
 }
