@@ -43,7 +43,7 @@ android {
     }
 }
 ```
-[./go/Makefile](./go/Makefile) 中写死了 NDK_VERSION = 27.2.12479018 ，请根据实际情况修改
+[./go/Makefile](./go/Makefile) 中写死了ndk版本 NDK_VERSION ，若不存在请根据实际情况修改，或者设置该变量传入，
 
 ### iOS/macOS
 修改 [./ios/native_add.podspec](./ios/native_add.podspec) 和 [./macos/native_add.podspec](./macos/native_add.podspec)
