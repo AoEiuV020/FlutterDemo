@@ -21,7 +21,13 @@ A new Flutter FFI plugin project.
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
   s.platform = :ios, '12.0'
-
+  s.script_phase = {
+    :name => 'update go library',
+    :script => 'touch ${BUILT_PRODUCTS_DIR}/prebuild.touch',
+    :execution_position=> :before_compile,
+    :input_files => ['${PODS_TARGET_SRCROOT}/../prebuild/${PLATFORM_FAMILY_NAME}/'],
+    :output_files => ["${BUILT_PRODUCTS_DIR}/prebuild.touch"],
+  }
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     # Flutter.framework does not contain a i386 slice.
