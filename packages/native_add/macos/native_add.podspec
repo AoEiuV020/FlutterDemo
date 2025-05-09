@@ -29,7 +29,13 @@ A new Flutter FFI plugin project.
   s.dependency 'FlutterMacOS'
 
   s.platform = :osx, '10.11'
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+  s.script_phase = {
+    :name => 'update go library',
+    :script => 'touch ${BUILT_PRODUCTS_DIR}/prebuild.touch',
+    :execution_position=> :before_compile,
+    :input_files => ['${PODS_TARGET_SRCROOT}/../prebuild/${PLATFORM_FAMILY_NAME}/'],
+    :output_files => ["${BUILT_PRODUCTS_DIR}/prebuild.touch"],
+  }
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     # We use `-force_load` instead of `-l` since Xcode strips out unused symbols from static libraries.
