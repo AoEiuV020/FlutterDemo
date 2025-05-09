@@ -10,5 +10,7 @@ elif [ "$GOARCH" = "arm64" ]; then
     CARCH="arm64"
 fi
 
+export CC="cc -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+
 go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/$CARCH/${LIB_NAME}.a .
 rm $PREBUILD_PATH/$CARCH/${LIB_NAME}.h
