@@ -32,7 +32,7 @@ WebAssembly.instantiate(fs.readFileSync('../prebuild/Web/libnative_add.wasm'), g
 });
 // 创建HTTP服务器防止进程退出
 const http = require('http');
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
 	console.log('Received request for ' + req.url);
 	const url = require('url');
 	const uri = url.parse(req.url, true)
@@ -49,6 +49,13 @@ const server = http.createServer((req, res) => {
 		const result = globalThis.sum_string(query.a, query.b);
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end(result);
+	} else if (uri.pathname === '/sumAsync') {
+        // curl 'localhost:8080/sumAsync?a=3&b=4'
+		const a = parseInt(query.a) || 0;
+		const b = parseInt(query.b) || 0;
+		const result = await globalThis.sum_long_running(a, b);
+		res.writeHead(200, {'Content-Type': 'text/plain'});
+		res.end(result.toString());
 	} else {
 		res.writeHead(200, {'Content-Type': 'text/plain'});
 		res.end('Server running to keep Node.js alive\n');
