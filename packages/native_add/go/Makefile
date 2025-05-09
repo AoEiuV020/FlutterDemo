@@ -18,7 +18,7 @@ else
 endif
 
 NDK_VERSION ?= 27.2.12479018
-NDK_BIN ?= $(ANDROID_HOME)/ndk/$(NDK_VERSION)/toolchains/llvm/prebuilt/$(NDK_PLATFORM)/bin
+NDK_BIN ?= $(subst \,/,$(ANDROID_HOME))/ndk/$(NDK_VERSION)/toolchains/llvm/prebuilt/$(NDK_PLATFORM)/bin
 
 # 根据目标名称设置平台路径
 LIB_PREFIX = lib
