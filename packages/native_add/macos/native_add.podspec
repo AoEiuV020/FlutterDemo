@@ -39,7 +39,7 @@ A new Flutter FFI plugin project.
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     # We use `-force_load` instead of `-l` since Xcode strips out unused symbols from static libraries.
-    'OTHER_LDFLAGS' => '-force_load ${PODS_TARGET_SRCROOT}/../prebuild/${PLATFORM_FAMILY_NAME}/${CURRENT_ARCH}/libnative_add.a',
+    'OTHER_LDFLAGS' => "-force_load ${PODS_TARGET_SRCROOT}/../prebuild/${PLATFORM_FAMILY_NAME}/${CURRENT_ARCH}/lib#{s.name}.a",
   }
   s.swift_version = '5.0'
 end
