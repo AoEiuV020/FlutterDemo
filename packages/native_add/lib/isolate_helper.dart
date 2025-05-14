@@ -27,7 +27,19 @@ class IsolateHelper<T, R> {
         final completer = _requests[message.id];
         if (completer != null) {
           _requests.remove(message.id);
-          completer.complete(message.result as R);
+
+          if (message.error != null) {
+            // 如果有异常，则用异常完成 Future
+            completer.completeError(
+              message.error!,
+              message.stackTrace != null
+                  ? StackTrace.fromString(message.stackTrace!)
+                  : null,
+            );
+          } else {
+            // 否则用结果完成 Future
+            completer.complete(message.result as R);
+          }
         }
       }
     });
@@ -69,9 +81,20 @@ class IsolateHelper<T, R> {
 
     receivePort.listen((message) {
       if (message is _IsolateRequest) {
-        // 使用动态调用方式，避免类型转换问题
-        final result = setup.function.call(message.input);
-        setup.sendPort.send(_IsolateResponse(message.id, result));
+        try {
+          // 尝试调用函数并获取结果
+          final result = setup.function.call(message.input);
+          setup.sendPort.send(_IsolateResponse(message.id, result: result));
+        } catch (e, stackTrace) {
+          // 捕获异常，并发送回主 Isolate
+          setup.sendPort.send(
+            _IsolateResponse(
+              message.id,
+              error: e.toString(),
+              stackTrace: stackTrace.toString(),
+            ),
+          );
+        }
       }
     });
 
@@ -98,7 +121,9 @@ class _IsolateRequest<T> {
 /// Isolate 响应
 class _IsolateResponse<R> {
   final int id;
-  final R result;
+  final R? result;
+  final String? error;
+  final String? stackTrace;
 
-  _IsolateResponse(this.id, this.result);
+  _IsolateResponse(this.id, {this.result, this.error, this.stackTrace});
 }

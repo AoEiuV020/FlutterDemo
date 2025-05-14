@@ -76,8 +76,14 @@ String sumString(String a, String b) {
 
 // HTTP API调用
 Future<int> sumViaHttp(int a, int b) async {
-  // 使用 IsolateHelper 执行 HTTP 请求
-  return _httpIsolateHelper.execute(_HttpParams(a, b));
+  try {
+    // 使用 IsolateHelper 执行 HTTP 请求
+    return await _httpIsolateHelper.execute(_HttpParams(a, b));
+  } catch (e) {
+    // 现在我们能正确捕获并处理来自 Isolate 的异常
+    print('在主 Isolate 中捕获到 HTTP 调用异常: $e');
+    rethrow; // 重新抛出异常，或者进行其他处理
+  }
 }
 
 // HTTP参数类
