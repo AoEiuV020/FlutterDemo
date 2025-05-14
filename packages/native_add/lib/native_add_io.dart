@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:isolate_manager/isolate_manager.dart';
 
 import 'native_add_bindings_generated.dart';
-import 'isolate_helper.dart';
 
 /// A very short-lived native function.
 ///
@@ -13,42 +13,50 @@ import 'isolate_helper.dart';
 /// only do this for native functions which are guaranteed to be short-lived.
 int sum(int a, int b) => _bindings.sum(a, b);
 
+// 创建共享的isolate管理器
+final _sharedIsolateManager = IsolateManager.createShared();
+
 /// A longer lived native function
 Future<int> sumAsync(int a, int b) async {
-  // 直接创建专用的 IsolateHelper 实例并执行
-  final helper = IsolateHelper<void, int>((_) {
-    return _bindings.sum_long_running(a, b);
-  });
-  
-  return helper.execute(null);
+  return _sharedIsolateManager.compute(_sumLongRunning, [a, b]);
 }
 
 // HTTP API调用
 Future<int> sumViaHttp(int a, int b) async {
-  // 直接创建专用的 IsolateHelper 实例并执行
-  final helper = IsolateHelper<void, int>((_) {
-    final errorPointer = calloc<Pointer<Char>>();
-    try {
-      final result = _bindings.sum_via_http(a, b, errorPointer);
+  return _sharedIsolateManager.compute(_sumViaHttp, [a, b]);
+}
 
-      // 检查错误
-      final errorMessagePtr = errorPointer.value;
-      if (errorMessagePtr != nullptr) {
-        try {
-          final errorMessage = errorMessagePtr.cast<Utf8>().toDartString();
-          throw Exception('HTTP调用失败: $errorMessage');
-        } finally {
-          _bindings.free_error_message(errorMessagePtr);
-        }
+// 长时间运行的计算worker函数
+@isolateManagerSharedWorker
+int _sumLongRunning(List<int> values) {
+  return _bindings.sum_long_running(values[0], values[1]);
+}
+
+// HTTP调用worker函数
+@isolateManagerSharedWorker
+int _sumViaHttp(List<int> values) {
+  final a = values[0];
+  final b = values[1];
+  final errorPointer = calloc<Pointer<Char>>();
+
+  try {
+    final result = _bindings.sum_via_http(a, b, errorPointer);
+
+    // 检查错误
+    final errorMessagePtr = errorPointer.value;
+    if (errorMessagePtr != nullptr) {
+      try {
+        final errorMessage = errorMessagePtr.cast<Utf8>().toDartString();
+        throw Exception('HTTP调用失败: $errorMessage');
+      } finally {
+        _bindings.free_error_message(errorMessagePtr);
       }
-
-      return result;
-    } finally {
-      calloc.free(errorPointer);
     }
-  });
-  
-  return helper.execute(null);
+
+    return result;
+  } finally {
+    calloc.free(errorPointer);
+  }
 }
 
 // String addition function
@@ -108,5 +116,7 @@ final DynamicLibrary _dylib = () {
 /// The bindings to the native functions in [_dylib].
 final NativeAddBindings _bindings = NativeAddBindings(_dylib);
 
-// 删除旧的 Isolate 实现代码...
-// 注意：这里移除了原来的 _SumRequest, _SumResponse 类以及相关的全局变量和 _helperIsolateSendPort 函数
+// 应用结束时停止isolate管理器
+Future<void> disposeIsolates() async {
+  await _sharedIsolateManager.stop();
+}
