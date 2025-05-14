@@ -56,5 +56,11 @@ func increase() C.int {
 	return C.int(result)
 }
 
+//export go_call
+func go_call(method *C.char, paramJSON *C.char) *C.char {
+	result := Call(C.GoString(method), C.GoString(paramJSON))
+	return C.CString(result)
+}
+
 func main() {
 }

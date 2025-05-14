@@ -135,4 +135,34 @@ class NativeAddBindings {
     'increase',
   );
   late final _increase = _increasePtr.asFunction<int Function()>();
+
+  /// 通用调用接口，根据方法名和JSON参数字符串调用对应函数
+  /// 参数:
+  /// - method: 要调用的方法名
+  /// - paramJSON: 包含参数的JSON字符串
+  /// 返回值: 包含执行结果的JSON字符串
+  /// 注意: 调用方需要负责释放返回的字符串内存，使用free_string函数
+  ffi.Pointer<ffi.Char> go_call(
+    ffi.Pointer<ffi.Char> method,
+    ffi.Pointer<ffi.Char> paramJSON,
+  ) {
+    return _go_call(method, paramJSON);
+  }
+
+  late final _go_callPtr = _lookup<
+    ffi.NativeFunction<
+      ffi.Pointer<ffi.Char> Function(
+        ffi.Pointer<ffi.Char>,
+        ffi.Pointer<ffi.Char>,
+      )
+    >
+  >('go_call');
+  late final _go_call =
+      _go_callPtr
+          .asFunction<
+            ffi.Pointer<ffi.Char> Function(
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+            )
+          >();
 }

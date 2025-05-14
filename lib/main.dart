@@ -101,6 +101,30 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // 添加新方法调用goCallAsync测试SumLongRunning
+  Future<void> _callGoAsyncSumLongRunning() async {
+    try {
+      // 调用goCallAsync方法，指定方法名为'SumLongRunning'，传递参数
+      final result = await native_add.goCallAsync('SumLongRunning', {
+        'a': _counter,
+        'b': 1,
+      });
+
+      // 从结果Map中获取sum字段的值
+      final int sum = result['result'] as int;
+
+      setState(() {
+        _counter = sum;
+      });
+    } catch (e) {
+      // 显示错误信息
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('goCallAsync错误: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -181,6 +205,13 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _incrementViaIncrease,
             tooltip: 'Global Increment',
             child: const Icon(Icons.plus_one),
+          ),
+          const SizedBox(width: 16),
+          // 添加测试goCallAsync的按钮
+          FloatingActionButton(
+            onPressed: _callGoAsyncSumLongRunning,
+            tooltip: 'Go Call Async',
+            child: const Icon(Icons.api),
           ),
         ],
       ),

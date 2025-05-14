@@ -77,6 +77,20 @@ func registerCallbacks() {
 	js.Global().Set("increase", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		return Increase()
 	}))
+
+	// 通用Call函数
+	js.Global().Set("go_call", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		method := args[0].String()
+		paramJSON := args[1].String()
+		return Call(method, paramJSON)
+	}))
+
+	// 通用Call函数
+	js.Global().Set("go_call_async", ToPromise(func(args []js.Value) interface{} {
+		method := args[0].String()
+		paramJSON := args[1].String()
+		return Call(method, paramJSON)
+	}))
 }
 
 func main() {
