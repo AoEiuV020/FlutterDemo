@@ -78,6 +78,22 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // 添加新方法处理HTTP调用
+  Future<void> _incrementCounterViaHttp() async {
+    try {
+      final result = await native_add.sumViaHttp(_counter, 1);
+      setState(() {
+        _counter = result;
+      });
+    } catch (e) {
+      // 显示错误信息
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('错误: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -144,6 +160,13 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _incrementCounterAsync,
             tooltip: 'Increment Async',
             child: const Icon(Icons.timer),
+          ),
+          const SizedBox(width: 16),
+          // 添加新按钮
+          FloatingActionButton(
+            onPressed: _incrementCounterViaHttp,
+            tooltip: 'Increment via HTTP',
+            child: const Icon(Icons.http),
           ),
         ],
       ),

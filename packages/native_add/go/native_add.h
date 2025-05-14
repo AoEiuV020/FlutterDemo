@@ -34,3 +34,12 @@ FFI_PLUGIN_EXPORT char* sum_string(const char* a, const char* b);
 
 // 非常重要：您必须提供一个函数来释放 sum_string 返回的内存
 FFI_PLUGIN_EXPORT void free_string(char* str);
+
+// HTTP API function that calls a sum service via HTTP
+// Returns result via int return value, and error message via char** out parameter
+// If successful, error_message will be NULL
+// If fails, result will be -1 and error_message will contain the error
+FFI_PLUGIN_EXPORT int sum_via_http(int a, int b, char** error_message);
+
+// Free the error message allocated by sum_via_http
+FFI_PLUGIN_EXPORT void free_error_message(char* error_message);

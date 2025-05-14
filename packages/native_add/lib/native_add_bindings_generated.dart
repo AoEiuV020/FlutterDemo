@@ -91,4 +91,39 @@ class NativeAddBindings {
       );
   late final _free_string =
       _free_stringPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
+  /// HTTP API function that calls a sum service via HTTP
+  /// Returns result via int return value, and error message via char** out parameter
+  /// If successful, error_message will be NULL
+  /// If fails, result will be -1 and error_message will contain the error
+  int sum_via_http(
+    int a,
+    int b,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> error_message,
+  ) {
+    return _sum_via_http(a, b, error_message);
+  }
+
+  late final _sum_via_httpPtr = _lookup<
+    ffi.NativeFunction<
+      ffi.Int Function(ffi.Int, ffi.Int, ffi.Pointer<ffi.Pointer<ffi.Char>>)
+    >
+  >('sum_via_http');
+  late final _sum_via_http =
+      _sum_via_httpPtr
+          .asFunction<
+            int Function(int, int, ffi.Pointer<ffi.Pointer<ffi.Char>>)
+          >();
+
+  /// Free the error message allocated by sum_via_http
+  void free_error_message(ffi.Pointer<ffi.Char> error_message) {
+    return _free_error_message(error_message);
+  }
+
+  late final _free_error_messagePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char>)>>(
+        'free_error_message',
+      );
+  late final _free_error_message =
+      _free_error_messagePtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
 }

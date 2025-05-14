@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
-
+import 'dart:convert';
 import 'package:ffi/ffi.dart';
 
 import 'native_add_bindings_generated.dart';
@@ -69,6 +69,30 @@ String sumString(String a, String b) {
     if (cResult != nullptr) {
       _bindings.free_string(cResult);
     }
+  }
+}
+
+// HTTP API调用
+Future<int> sumViaHttp(int a, int b) async {
+  final errorPointer = calloc<Pointer<Char>>();
+
+  try {
+    final result = _bindings.sum_via_http(a, b, errorPointer);
+
+    // 检查错误
+    final errorMessagePtr = errorPointer.value;
+    if (errorMessagePtr != nullptr) {
+      try {
+        final errorMessage = errorMessagePtr.cast<Utf8>().toDartString();
+        throw Exception('HTTP调用失败: $errorMessage');
+      } finally {
+        _bindings.free_error_message(errorMessagePtr);
+      }
+    }
+
+    return result;
+  } finally {
+    calloc.free(errorPointer);
   }
 }
 
