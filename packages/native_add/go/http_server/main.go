@@ -9,9 +9,28 @@ import (
 
 const port = 8080
 
+// enableCORS 是一个中间件，为响应添加CORS头信息
+func enableCORS(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 添加CORS头信息
+		w.Header().Set("Access-Control-Allow-Origin", "*") // 允许所有来源访问
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// 对于OPTIONS请求直接返回200
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// 继续处理请求
+		next(w, r)
+	}
+}
+
 func main() {
-	// 注册处理函数
-	http.HandleFunc("/sum", handleSum)
+	// 注册处理函数（使用CORS中间件包装）
+	http.HandleFunc("/sum", enableCORS(handleSum))
 
 	// 启动HTTP服务器
 	address := fmt.Sprintf(":%d", port)
