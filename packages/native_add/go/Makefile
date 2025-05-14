@@ -60,6 +60,12 @@ endif
 PREBUILD_PATH = $(PREBUILD_BASE)/$(PLATFORM)
 LIB_NAME := $(LIB_PREFIX)$(PROJECT_NAME)
 
+export PREBUILD_PATH
+export LIB_NAME
+export GO_BUILD_FLAGS
+export BUILD_MODE
+export PROJECT_NAME
+
 # 添加默认目标，根据系统类型自动选择目标
 .PHONY: release
 all:
@@ -134,41 +140,26 @@ android: android-armv7a android-arm64 android-x86 android-x86_64
 ios-x86_64-sim:
 	GOARCH=amd64 \
 	SDK=iphonesimulator \
-	LIB_NAME=${LIB_NAME} \
-	PREBUILD_PATH=${PREBUILD_PATH} \
-	GO_BUILD_FLAGS="$(GO_BUILD_FLAGS)" \
 	./build_ios.sh
 
 ios-arm64-sim:
 	GOARCH=arm64 \
 	SDK=iphonesimulator \
-	LIB_NAME=${LIB_NAME} \
-	PREBUILD_PATH=${PREBUILD_PATH} \
-	GO_BUILD_FLAGS="$(GO_BUILD_FLAGS)" \
 	./build_ios.sh
 
 ios-arm64:
 	GOARCH=arm64 \
 	SDK=iphoneos \
-	LIB_NAME=${LIB_NAME} \
-	PREBUILD_PATH=${PREBUILD_PATH} \
-	GO_BUILD_FLAGS="$(GO_BUILD_FLAGS)" \
 	./build_ios.sh
 
 ios: ios-x86_64-sim ios-arm64-sim ios-arm64
 
 macos-arm64:
 	GOARCH=arm64 \
-	LIB_NAME=${LIB_NAME} \
-	PREBUILD_PATH=${PREBUILD_PATH} \
-	GO_BUILD_FLAGS="$(GO_BUILD_FLAGS)" \
 	./build_mac.sh
 
 macos-amd64:
 	GOARCH=amd64 \
-	LIB_NAME=${LIB_NAME} \
-	PREBUILD_PATH=${PREBUILD_PATH} \
-	GO_BUILD_FLAGS="$(GO_BUILD_FLAGS)" \
 	./build_mac.sh
 
 macos-universal: macos-arm64 macos-amd64

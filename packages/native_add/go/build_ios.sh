@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 export GOOS=ios
 export CGO_ENABLED=1
 # export CGO_CFLAGS="-fembed-bitcode"
@@ -22,5 +23,6 @@ CLANG=$(xcrun --sdk "$SDK" --find clang)
 CC="$CLANG -target $TARGET -isysroot $SDK_PATH $@"
 export CC
 
-go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/$SDK/$CARCH/${LIB_NAME}.a
+# 使用全局导出的GO_BUILD_FLAGS变量
+eval go build $GO_BUILD_FLAGS -buildmode=c-archive -o $PREBUILD_PATH/$SDK/$CARCH/${LIB_NAME}.a
 rm $PREBUILD_PATH/$SDK/$CARCH/${LIB_NAME}.h

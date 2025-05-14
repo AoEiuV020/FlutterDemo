@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 export GOOS=darwin
 export CGO_ENABLED=1
 export SDK=macos
@@ -12,5 +13,6 @@ fi
 
 export CC="cc -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
 
-go build -trimpath -buildmode=c-archive -o $PREBUILD_PATH/$CARCH/${LIB_NAME}.a .
+# 使用全局导出的环境变量
+eval go build $GO_BUILD_FLAGS -buildmode=c-archive -o $PREBUILD_PATH/$CARCH/${LIB_NAME}.a .
 rm $PREBUILD_PATH/$CARCH/${LIB_NAME}.h
