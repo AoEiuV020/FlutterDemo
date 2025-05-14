@@ -11,3 +11,6 @@ String sumString(String a, String b) => native_add.sumString(a, b);
 /// 如果调用成功，返回结果
 /// 如果调用失败，抛出异常
 Future<int> sumViaHttp(int a, int b) => native_add.sumViaHttp(a, b);
+
+/// 每次调用将全局计数器加一并返回
+int increase() => native_add.increase();

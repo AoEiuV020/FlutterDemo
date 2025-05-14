@@ -50,5 +50,11 @@ func free_error_message(errorMsg *C.char) {
 	}
 }
 
+//export increase
+func increase() C.int {
+	result := Increase()
+	return C.int(result)
+}
+
 func main() {
 }

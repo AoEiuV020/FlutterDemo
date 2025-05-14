@@ -94,6 +94,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // 添加新方法调用increase函数
+  void _incrementViaIncrease() {
+    setState(() {
+      _counter = native_add.increase();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -167,6 +174,13 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: _incrementCounterViaHttp,
             tooltip: 'Increment via HTTP',
             child: const Icon(Icons.http),
+          ),
+          const SizedBox(width: 16),
+          // 添加调用increase函数的按钮
+          FloatingActionButton(
+            onPressed: _incrementViaIncrease,
+            tooltip: 'Global Increment',
+            child: const Icon(Icons.plus_one),
           ),
         ],
       ),

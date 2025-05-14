@@ -11,4 +11,5 @@ extension JSWindowExtension on JSWindow {
   external JSPromise<JSNumber> sum_long_running(int a, int b);
   external String sum_string(String a, String b);
   external JSPromise<JSNumber> sum_via_http(int a, int b);
+  external int increase();
 }

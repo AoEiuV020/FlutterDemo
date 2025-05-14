@@ -126,4 +126,13 @@ class NativeAddBindings {
       );
   late final _free_error_message =
       _free_error_messagePtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
+
+  int increase() {
+    return _increase();
+  }
+
+  late final _increasePtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>(
+    'increase',
+  );
+  late final _increase = _increasePtr.asFunction<int Function()>();
 }

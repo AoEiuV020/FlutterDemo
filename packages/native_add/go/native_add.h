@@ -43,3 +43,5 @@ FFI_PLUGIN_EXPORT int sum_via_http(int a, int b, char** error_message);
 
 // Free the error message allocated by sum_via_http
 FFI_PLUGIN_EXPORT void free_error_message(char* error_message);
+
+FFI_PLUGIN_EXPORT int increase();

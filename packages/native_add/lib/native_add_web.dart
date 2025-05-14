@@ -27,3 +27,8 @@ Future<int> sumViaHttp(int a, int b) async {
     throw Exception('HTTP调用失败: $e');
   }
 }
+
+/// Web版本的increase实现
+int increase() {
+  return jsWindow.increase();
+}

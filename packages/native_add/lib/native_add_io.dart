@@ -97,6 +97,11 @@ String sumString(String a, String b) {
   }
 }
 
+/// 调用原生increase函数
+int increase() {
+  return _bindings.increase();
+}
+
 const String _libName = 'native_add';
 
 /// The dynamic library in which the symbols for [NativeAddBindings] can be found.
