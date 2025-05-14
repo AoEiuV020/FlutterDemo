@@ -13,27 +13,42 @@ import 'isolate_helper.dart';
 /// only do this for native functions which are guaranteed to be short-lived.
 int sum(int a, int b) => _bindings.sum(a, b);
 
-/// A longer lived native function, which occupies the thread calling it.
-///
-/// Do not call these kind of native functions in the main isolate. They will
-/// block Dart execution. This will cause dropped frames in Flutter applications.
-/// Instead, call these native functions on a separate isolate.
+/// A longer lived native function
 Future<int> sumAsync(int a, int b) async {
-  // 使用 IsolateHelper 执行长时间运行的计算
-  return _sumIsolateHelper.execute(_SumParams(a, b));
+  // 直接创建专用的 IsolateHelper 实例并执行
+  final helper = IsolateHelper<void, int>((_) {
+    return _bindings.sum_long_running(a, b);
+  });
+  
+  return helper.execute(null);
 }
 
-// 创建一个专门用于处理sum_long_running的IsolateHelper实例
-final _sumIsolateHelper = IsolateHelper<_SumParams, int>((params) {
-  return _bindings.sum_long_running(params.a, params.b);
-});
+// HTTP API调用
+Future<int> sumViaHttp(int a, int b) async {
+  // 直接创建专用的 IsolateHelper 实例并执行
+  final helper = IsolateHelper<void, int>((_) {
+    final errorPointer = calloc<Pointer<Char>>();
+    try {
+      final result = _bindings.sum_via_http(a, b, errorPointer);
 
-// 参数类
-class _SumParams {
-  final int a;
-  final int b;
+      // 检查错误
+      final errorMessagePtr = errorPointer.value;
+      if (errorMessagePtr != nullptr) {
+        try {
+          final errorMessage = errorMessagePtr.cast<Utf8>().toDartString();
+          throw Exception('HTTP调用失败: $errorMessage');
+        } finally {
+          _bindings.free_error_message(errorMessagePtr);
+        }
+      }
 
-  _SumParams(this.a, this.b);
+      return result;
+    } finally {
+      calloc.free(errorPointer);
+    }
+  });
+  
+  return helper.execute(null);
 }
 
 // String addition function
@@ -73,50 +88,6 @@ String sumString(String a, String b) {
     }
   }
 }
-
-// HTTP API调用
-Future<int> sumViaHttp(int a, int b) async {
-  try {
-    // 使用 IsolateHelper 执行 HTTP 请求
-    return await _httpIsolateHelper.execute(_HttpParams(a, b));
-  } catch (e) {
-    // 现在我们能正确捕获并处理来自 Isolate 的异常
-    print('在主 Isolate 中捕获到 HTTP 调用异常: $e');
-    rethrow; // 重新抛出异常，或者进行其他处理
-  }
-}
-
-// HTTP参数类
-class _HttpParams {
-  final int a;
-  final int b;
-
-  _HttpParams(this.a, this.b);
-}
-
-// 创建一个专门用于处理HTTP请求的IsolateHelper实例
-final _httpIsolateHelper = IsolateHelper<_HttpParams, int>((params) {
-  final errorPointer = calloc<Pointer<Char>>();
-
-  try {
-    final result = _bindings.sum_via_http(params.a, params.b, errorPointer);
-
-    // 检查错误
-    final errorMessagePtr = errorPointer.value;
-    if (errorMessagePtr != nullptr) {
-      try {
-        final errorMessage = errorMessagePtr.cast<Utf8>().toDartString();
-        throw Exception('HTTP调用失败: $errorMessage');
-      } finally {
-        _bindings.free_error_message(errorMessagePtr);
-      }
-    }
-
-    return result;
-  } finally {
-    calloc.free(errorPointer);
-  }
-});
 
 const String _libName = 'native_add';
 
