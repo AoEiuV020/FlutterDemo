@@ -38,11 +38,6 @@ func ToPromise(fn PromiseFunc) js.Func {
 	})
 }
 
-func increase() js.Value {
-	result := main.Increase()
-	return js.ValueOf(result)
-}
-
 func registerCallbacks() {
 	// 普通同步函数
 	js.Global().Set("sum", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -80,7 +75,7 @@ func registerCallbacks() {
 
 	// 注册increase函数
 	js.Global().Set("increase", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		return increase()
+		return Increase()
 	}))
 }
 
