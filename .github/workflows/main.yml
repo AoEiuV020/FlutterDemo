@@ -188,6 +188,11 @@ jobs:
         with:
           distribution: 'oracle'
           java-version: '17'
+      - name: Setup Xcode version
+        if: matrix.name == 'ios' || matrix.name == 'macos'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.4'
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
