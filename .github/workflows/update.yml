@@ -33,7 +33,7 @@ jobs:
          branch=$(git branch --show-current)
          # 根据分支确定 version，并同时写入文件，后续直接复用该变量和文件内容
          if [[ "$branch" == "master" || "$branch" == "main" ]]; then
-           version=$(git rev-parse HEAD)
+           version=$(git rev-parse --short=7 HEAD)
          else
            version=$(flutter --version | head -1 | awk '{print $2}')
          fi
