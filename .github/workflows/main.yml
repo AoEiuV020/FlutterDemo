@@ -216,6 +216,8 @@ jobs:
           else
             echo "WEB_BASE_HREF=--base-href=/${{ github.event.repository.name }}/" >> $GITHUB_ENV
           fi
+      - name: Check Flutter environment
+        run: flutter doctor -v
       - name: build
         run: |
           flutter pub get
