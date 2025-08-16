@@ -31,16 +31,17 @@ jobs:
          cd $PWD
          cd $(dirname $(which flutter))/..
          branch=$(git branch --show-current)
-         echo $branch > $OLDPWD/.flutter-branch
+         # 根据分支确定 version，并同时写入文件，后续直接复用该变量和文件内容
          if [[ "$branch" == "master" || "$branch" == "main" ]]; then
-           git rev-parse HEAD > $OLDPWD/.flutter-version
+           version=$(git rev-parse HEAD)
          else
-           flutter --version | head -1 | awk '{print $2}' > $OLDPWD/.flutter-version
+           version=$(flutter --version | head -1 | awk '{print $2}')
          fi
+         echo "$branch" > $OLDPWD/.flutter-branch
+         echo "$version" > $OLDPWD/.flutter-version
          cd $OLDPWD
          git add .
          curl -L 'https://gist.githubusercontent.com/AoEiuV020/46f0746e06ea6a302fecb4d76bfb1243/raw/b34d662a83d49a05c183d5657d95dca668a5ac7a/actioninit.bashrc' |bash
-         version=$(flutter --version |head -1 |awk '{print $2}')
          git commit -m "update flutter $version"
          git tag $version
          git push --atomic origin ${GITHUB_REF#refs/heads/} $version
