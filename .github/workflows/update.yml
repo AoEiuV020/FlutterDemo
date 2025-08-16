@@ -7,8 +7,6 @@ on:
   push:
     paths:
       - '.github/workflows/update.yml'
-    branches:
-      - 'master'
   workflow_dispatch:
 
 jobs:
@@ -27,10 +25,19 @@ jobs:
          flutter --version
          dart run bin/update.dart
          cd $PWD
+         cd $(dirname $(which flutter))/..
+         branch=$(git branch --show-current)
+         echo $branch > $OLDPWD/.flutter-branch
+         if [[ "$branch" == "master" || "$branch" == "main" ]]; then
+           git rev-parse HEAD > $OLDPWD/.flutter-version
+         else
+           flutter --version | head -1 | awk '{print $2}' > $OLDPWD/.flutter-version
+         fi
+         cd $OLDPWD
          git add .
          curl -L 'https://github.com/AoEiuV020/rc/raw/master/linux/init.sh' |bash
          version=$(flutter --version |head -1 |awk '{print $2}')
-         git commit -m "update fluttter $version"
+         git commit -m "update flutter $version"
          git tag $version
-         git push --atomic origin master $version
+         git push --atomic origin ${GITHUB_REF#refs/heads/} $version
          

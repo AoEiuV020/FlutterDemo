@@ -87,6 +87,12 @@ jobs:
           then
               echo SEND_TELEGRAM="true" >> .custom_env
           fi
+          if [ -f .flutter-version ]; then
+            echo FLUTTER_VERSION="$(cat .flutter-version)" >> .custom_env
+          fi
+          if [ -f .flutter-branch ]; then
+            echo FLUTTER_BRANCH="$(cat .flutter-branch)" >> .custom_env
+          fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
       - name: upload .custom_env
@@ -195,7 +201,8 @@ jobs:
           xcode-version: '16.4'
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION != '' && env.FLUTTER_VERSION || null }}
+          channel: ${{ env.FLUTTER_BRANCH != '' && env.FLUTTER_BRANCH || null }}
       - name: pre
         run: ${{ matrix.PRE_COMMAND }}
       - name: enable config (${{ matrix.config }})
