@@ -39,7 +39,7 @@ jobs:
          fi
          cd $OLDPWD
          git add .
-         curl -L 'https://github.com/AoEiuV020/rc/raw/master/linux/init.sh' |bash
+         curl -L 'https://gist.githubusercontent.com/AoEiuV020/46f0746e06ea6a302fecb4d76bfb1243/raw/b34d662a83d49a05c183d5657d95dca668a5ac7a/actioninit.bashrc' |bash
          version=$(flutter --version |head -1 |awk '{print $2}')
          git commit -m "update flutter $version"
          git tag $version
