@@ -112,6 +112,10 @@ jobs:
     needs: [ build_env ]
     name: Build Flutter (${{ matrix.config }})
     runs-on: ${{ matrix.os }}
+    # 按平台限制并发，避免 gh-pages 推送冲突，同时允许同一工作流内多平台并行
+    concurrency:
+      group: ${{ matrix.name }}-deploy
+      cancel-in-progress: false
     strategy:
       matrix:
         name: [ android, android-aab, web, linux, windows, ios, macos ]
