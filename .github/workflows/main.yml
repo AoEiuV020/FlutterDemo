@@ -112,7 +112,7 @@ jobs:
     needs: [ build_env ]
     name: Build Flutter (${{ matrix.config }})
     runs-on: ${{ matrix.os }}
-    # 按平台限制并发，避免 gh-pages 推送冲突，同时允许同一工作流内多平台并行
+    # 按平台限制并发，同时允许同一工作流内多平台并行
     concurrency:
       group: ${{ matrix.name }}-deploy
       cancel-in-progress: false
@@ -284,13 +284,38 @@ jobs:
         with:
           name: ${{ matrix.name }}-build
           path: build/${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-      - name: Deploy
+      - name: Upload Pages Artifact
         if: "${{ matrix.name == 'web' && env.DEPLOY_WEB == 'true' }}"
-        uses: peaceiris/actions-gh-pages@v3
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          force_orphan: true
-          publish_dir: ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }}
+          path: ${{ matrix.RELEASE_DIRECTORY }}/${{ matrix.RELEASE_PATH }}
+  deploy_pages:
+    needs: [ build_env, build_app ]
+    name: Deploy Pages
+    runs-on: ubuntu-latest
+    if: ${{ needs.build_app.result == 'success' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: download custom env
+        uses: actions/download-artifact@v4
+        with:
+          name: custom_env
+      - name: apply custom env
+        run: |
+          cat .custom_env >> $GITHUB_ENV
+          rm .custom_env
+      - name: Configure Pages
+        if: ${{ env.DEPLOY_WEB == 'true' }}
+        uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        if: ${{ env.DEPLOY_WEB == 'true' }}
+        id: deployment
+        uses: actions/deploy-pages@v4
   release_create:
     needs: [ build_app ]
     name: create release
