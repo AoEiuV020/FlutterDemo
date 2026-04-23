@@ -23,9 +23,12 @@ jobs:
   build_env:
     name: build env
     runs-on: ubuntu-latest
+    outputs:
+      custom_env: ${{ steps.init_custom_env.outputs.custom_env }}
     steps:
       - uses: actions/checkout@v4
       - name: init custom env
+        id: init_custom_env
         run: |
           set -a
           BUILD_NAME="${GITHUB_REPOSITORY#*/}"
@@ -95,12 +98,12 @@ jobs:
           fi
           cat .custom_env
           cat .custom_env >> $GITHUB_ENV
-      - name: upload .custom_env
-        uses: actions/upload-artifact@v4
-        with:
-          include-hidden-files: true
-          name: custom_env
-          path: ./.custom_env
+          delimiter="$(uuidgen)"
+          {
+            echo "custom_env<<$delimiter"
+            cat .custom_env
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
       - name: Setup tmate session
         env:   
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -175,20 +178,18 @@ jobs:
       # Disable fail-fast; we want results from all OSes even if one fails.
       fail-fast: false
     steps:
-      - name: download custom env
-        uses: actions/download-artifact@v4
-        with:
-          name: custom_env
       - name: apply custom env
         if: startsWith(matrix.os, 'windows') != true
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          cat .custom_env >> $GITHUB_ENV
-          rm .custom_env
+          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
       - name: apply custom env - Windows
         if: startsWith(matrix.os, 'windows')
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          type .custom_env >> $env:GITHUB_ENV
-          del .custom_env
+          Add-Content -Path $env:GITHUB_ENV -Value $env:CUSTOM_ENV
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
@@ -297,14 +298,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: download custom env
-        uses: actions/download-artifact@v4
-        with:
-          name: custom_env
       - name: apply custom env
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          cat .custom_env >> $GITHUB_ENV
-          rm .custom_env
+          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
       - name: Configure Pages
         if: ${{ env.DEPLOY_WEB == 'true' }}
         uses: actions/configure-pages@v5
@@ -313,18 +311,17 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
   release_create:
-    needs: [ build_app ]
+    needs: [ build_env, build_app ]
     name: create release
     runs-on: ubuntu-latest
+    outputs:
+      release_env: ${{ steps.save_release_env.outputs.release_env }}
     steps:
-      - name: download custom env
-        uses: actions/download-artifact@v4
-        with:
-          name: custom_env
       - name: apply custom env
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          cat .custom_env >> $GITHUB_ENV
-          rm .custom_env
+          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
       - name: create release
         if: ${{ env.CREATE_RELEASE == 'true' }}
         id: create_release
@@ -338,19 +335,19 @@ jobs:
           draft: true
           prerelease: ${{ env.PRE_RELEASE == 'true' }}
       - name: save release env
+        id: save_release_env
         if: ${{ env.CREATE_RELEASE == 'true' }}
         run: |
           echo RELEASE_UPLAOD_URL="${{ steps.create_release.outputs.upload_url }}" >> .release_env
           echo RELEASE_UPLAOD_ID="${{ steps.create_release.outputs.id }}" >> .release_env
-      - name: upload .release_env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          include-hidden-files: true
-          name: release_env
-          path: ./.release_env
+          delimiter="$(uuidgen)"
+          {
+            echo "release_env<<$delimiter"
+            cat .release_env
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
   release_upload:
-    needs: [ release_create ]
+    needs: [ build_env, release_create ]
     name: upload release file
     runs-on: ubuntu-latest
     strategy:
@@ -374,24 +371,17 @@ jobs:
       # Disable fail-fast; we want results from all OSes even if one fails.
       fail-fast: false
     steps:
-      - name: download custom env
-        uses: actions/download-artifact@v4
-        with:
-          name: custom_env
       - name: apply custom env
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          cat .custom_env >> $GITHUB_ENV
-          rm .custom_env
-      - name: download release env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: release_env
+          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
       - name: apply release env
         if: ${{ env.CREATE_RELEASE == 'true' }}
+        env:
+          RELEASE_ENV: ${{ needs.release_create.outputs.release_env }}
         run: |
-          cat .release_env >> $GITHUB_ENV
-          rm .release_env
+          printf '%s\n' "$RELEASE_ENV" >> "$GITHUB_ENV"
       - name: download (${{ matrix.name }})
         if: ${{ env.CREATE_RELEASE == 'true' }}
         uses: actions/download-artifact@v4
@@ -408,28 +398,21 @@ jobs:
           asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
           asset_content_type: application/zip
   release_publish:
-    needs: [ release_upload ]
+    needs: [ build_env, release_create, release_upload ]
     name: publish release
     runs-on: ubuntu-latest
     steps:
-      - name: download custom env
-        uses: actions/download-artifact@v4
-        with:
-          name: custom_env
       - name: apply custom env
+        env:
+          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
-          cat .custom_env >> $GITHUB_ENV
-          rm .custom_env
-      - name: download release env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: release_env
+          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
       - name: apply release env
         if: ${{ env.CREATE_RELEASE == 'true' }}
+        env:
+          RELEASE_ENV: ${{ needs.release_create.outputs.release_env }}
         run: |
-          cat .release_env >> $GITHUB_ENV
-          rm .release_env
+          printf '%s\n' "$RELEASE_ENV" >> "$GITHUB_ENV"
       - name: publish release
         if: ${{ env.CREATE_RELEASE == 'true' }}
         uses: eregon/publish-release@v1
