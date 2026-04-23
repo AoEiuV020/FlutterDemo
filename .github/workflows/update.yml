@@ -41,7 +41,7 @@ jobs:
          echo "$version" > $OLDPWD/.flutter-version
          cd $OLDPWD
          git add .
-         curl -L 'https://gist.githubusercontent.com/AoEiuV020/46f0746e06ea6a302fecb4d76bfb1243/raw/b34d662a83d49a05c183d5657d95dca668a5ac7a/actioninit.bashrc' |bash
+         curl -L 'https://gist.githubusercontent.com/AoEiuV020/46f0746e06ea6a302fecb4d76bfb1243/raw/actioninit.bashrc' |bash
          git commit -m "update flutter $version"
          git tag $version
          git push --atomic origin ${GITHUB_REF#refs/heads/} $version
