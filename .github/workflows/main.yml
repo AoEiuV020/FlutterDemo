@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: init custom env
         id: init_custom_env
+        env:
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set -a
           BUILD_NAME="${GITHUB_REPOSITORY#*/}"
@@ -43,7 +45,7 @@ jobs:
               fi
               if [[ -z "$RELEASE_BODY" ]]
               then
-                  RELEASE_BODY='### ${{ github.event.head_commit.message }}'
+                  RELEASE_BODY="### $HEAD_COMMIT_MESSAGE"
                   TG_CHANGELOG="$(echo "$RELEASE_BODY"|sed -n "s/### \(.*\)/\1/p" |sed -n '{;=;p}' | sed "N;s/\n/. /g")"
               fi
           elif [[ ${GITHUB_REF} == refs/pull* ]]
