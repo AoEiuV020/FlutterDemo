@@ -310,113 +310,32 @@ jobs:
         if: ${{ env.DEPLOY_WEB == 'true' }}
         id: deployment
         uses: actions/deploy-pages@v4
-  release_create:
+  release:
     needs: [ build_env, build_app ]
-    name: create release
+    name: release
     runs-on: ubuntu-latest
-    outputs:
-      release_env: ${{ steps.save_release_env.outputs.release_env }}
+    permissions:
+      contents: write
     steps:
       - name: apply custom env
         env:
           CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
         run: |
           printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
-      - name: create release
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.BUILD_VERSION }}
-          release_name: ${{ env.BUILD_VERSION }}
-          body: ${{ env.RELEASE_BODY }}
-          draft: true
-          prerelease: ${{ env.PRE_RELEASE == 'true' }}
-      - name: save release env
-        id: save_release_env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        run: |
-          echo RELEASE_UPLAOD_URL="${{ steps.create_release.outputs.upload_url }}" >> .release_env
-          echo RELEASE_UPLAOD_ID="${{ steps.create_release.outputs.id }}" >> .release_env
-          delimiter="$(uuidgen)"
-          {
-            echo "release_env<<$delimiter"
-            cat .release_env
-            echo "$delimiter"
-          } >> "$GITHUB_OUTPUT"
-  release_upload:
-    needs: [ build_env, release_create ]
-    name: upload release file
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        name: [ android, android-aab, web, linux, windows, ios, macos ]
-        include:
-          - name: android
-            FILE_TYPE: apk
-          - name: android-aab
-            FILE_TYPE: aab
-          - name: web
-            FILE_TYPE: zip
-          - name: linux
-            FILE_TYPE: tar.gz
-          - name: windows
-            FILE_TYPE: zip
-          - name: ios
-            FILE_TYPE: ipa
-          - name: macos
-            FILE_TYPE: dmg
-      # Disable fail-fast; we want results from all OSes even if one fails.
-      fail-fast: false
-    steps:
-      - name: apply custom env
-        env:
-          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
-        run: |
-          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
-      - name: apply release env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        env:
-          RELEASE_ENV: ${{ needs.release_create.outputs.release_env }}
-        run: |
-          printf '%s\n' "$RELEASE_ENV" >> "$GITHUB_ENV"
-      - name: download (${{ matrix.name }})
+      - name: download artifacts
         if: ${{ env.CREATE_RELEASE == 'true' }}
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.name }}-build
-      - name: Upload Release Asset (${{ matrix.name }})
+          pattern: "*-build"
+          path: dist
+          merge-multiple: true
+      - name: create release
         if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          upload_url: ${{ env.RELEASE_UPLAOD_URL }}
-          asset_path: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-          asset_name: ${{ env.BUILD_NAME_WITH_VERSION }}-${{ matrix.name }}.${{ matrix.FILE_TYPE }}
-          asset_content_type: application/zip
-  release_publish:
-    needs: [ build_env, release_create, release_upload ]
-    name: publish release
-    runs-on: ubuntu-latest
-    steps:
-      - name: apply custom env
-        env:
-          CUSTOM_ENV: ${{ needs.build_env.outputs.custom_env }}
-        run: |
-          printf '%s\n' "$CUSTOM_ENV" >> "$GITHUB_ENV"
-      - name: apply release env
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        env:
-          RELEASE_ENV: ${{ needs.release_create.outputs.release_env }}
-        run: |
-          printf '%s\n' "$RELEASE_ENV" >> "$GITHUB_ENV"
-      - name: publish release
-        if: ${{ env.CREATE_RELEASE == 'true' }}
-        uses: eregon/publish-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release_id: ${{ env.RELEASE_UPLAOD_ID }}
+          tag: ${{ env.BUILD_VERSION }}
+          name: ${{ env.BUILD_VERSION }}
+          body: ${{ env.RELEASE_BODY }}
+          artifacts: dist/*
+          immutableCreate: true
+          prerelease: ${{ env.PRE_RELEASE == 'true' }}
