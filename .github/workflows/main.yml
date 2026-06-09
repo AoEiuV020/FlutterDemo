@@ -196,7 +196,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'oracle'
-          java-version: '17'
+          java-version: '21'
       - name: Setup Xcode version
         if: matrix.name == 'ios' || matrix.name == 'macos'
         uses: maxim-lobanov/setup-xcode@v1
