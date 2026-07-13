@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'root_coordinator.dart';
+import 'apps/app_a.dart';
 
 void main() {
   runDemoApp();
 }
 
 void runDemoApp() {
-  runApp(const RootCoordinator());
+  runApp(const AppA());
 }
